@@ -11,9 +11,4 @@ using TEpoch = userver::utils::StrongTypedef<
     std::uint64_t,
     userver::utils::StrongTypedefOps::kCompareTransparent>;
 
-struct THubLag {
-    TEpoch AppliedEpoch;
-    std::size_t LaggedEpochs;
-};
-
 }  // namespace NCoordinator::NCore::NDomain

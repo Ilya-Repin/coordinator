@@ -22,4 +22,13 @@ using TLoadFactor = userver::utils::StrongTypedef<
     std::uint64_t,
     userver::utils::StrongTypedefOps::kCompareTransparent>;
 
+enum class EHubStatus {
+    HEALTHY,
+    DRAINING,
+    OVERLOADED,
+    // SUSPECTED,
+    // UNHEALTHY,
+    LAGGED,
+};
+
 }  // namespace NCoordinator::NCore::NDomain

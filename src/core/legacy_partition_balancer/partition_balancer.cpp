@@ -85,41 +85,14 @@ void TPartitionBalancer::Rebalance(const TClusterSnapshot& snapshot, const TBala
 {
     if (!HashRing_.IsInitialized()) {
         throw std::runtime_error("Partitions are not initialized!");
-        // if (!CoordinationState_.StatByPartition.empty()) {
-        //     std::vector<NDomain::TPartitionId> partitions;
-        //     partitions.reserve(CoordinationState_.StatByPartition.size());
-        //     for (const auto& [id, state] : CoordinationState_.StatByPartition) {
-        //         partitions.emplace_back(id);
-        //         CoordinationEpoch_ = std::max(CoordinationEpoch_, state.ObservedAt);
-        //     }
-        //     HashRing_.LoadPartitions(partitions);
-        // } else {
-        //     HashRing_.InitializeWithCount(10); // TODO replace with default from config
-        // }    
     }
 
     NDomain::TEpoch previousEpoch{(CoordinationEpoch_.GetUnderlying())++};
 
-    std::unordered_set<NDomain::TPartitionId> orphanedPartitions{
-        HashRing_.GetAllPartitions().begin(),
-        HashRing_.GetAllPartitions().end(),
-    };
-
-    for (auto it = PartitionsByHub_.begin(); it != PartitionsByHub_.end(); ) {
-        const auto& endpoint = it->first;
-
-        if (snapshot.find(endpoint) == snapshot.end()) {
-            it = PartitionsByHub_.erase(it);
-        } else {
-            for (const auto& partition : it->second) {
-                orphanedPartitions.erase(partition);
-            }
-            ++it;
-        }
-    }
+    auto orphanedPartitions = CollectOrphanedPartitions(snapshot);
 
     std::vector<NDomain::TLoadFactor> loadFactors;
-    std::unordered_set<NDomain::THubEndpoint> activeHubs;
+    std::vector<NDomain::THubEndpoint> healthyHubs;
     std::unordered_set<NDomain::THubEndpoint> overloadedHubs;
 
     for (const auto& [endpoint, report] : snapshot) {
@@ -134,22 +107,39 @@ void TPartitionBalancer::Rebalance(const TClusterSnapshot& snapshot, const TBala
 
         switch (state.Status) {
             case NDomain::EHubStatus::HEALTHY:
+                healthyHubs.insert(state.Endpoint);
+                loadFactors.push_back(report.LoadFactor);
+                break; 
             case NDomain::EHubStatus::OVERLOADED:
-                activeHubs.insert(state.Endpoint);
+                overloadedHubs.insert(state.Endpoint);
                 loadFactors.push_back(report.LoadFactor);
                 break; 
             case NDomain::EHubStatus::DRAINING:
+                DrainHub(state.Endpoint, orphanedPartitions);
+                break;
             case NDomain::EHubStatus::LAGGED:
             case NDomain::EHubStatus::UNKNOWN:
-                DrainHub(state.Endpoint, orphanedPartitions);
+                AbandonHub(state.Endpoint, orphanedPartitions);
                 break;
         };
     }
 
+
+    // const std::size_t budget = settings.HubMigrationBudgets;
+    // std::size_t movementCost = 0;
+    if (!orphanedPartitions.empty()) {
+        AssignOrphanedPartitions(orphanedPartitions);
+    } 
+    
+    // load factors = ...
     const std::size_t cv = CalculateCV(loadFactors);
 
-    if (!orphanedPartitions.empty() ||  !overloadedHubs.empty() || cv > settings.MinBalancingCV ) {
-        BalancePartitions(orphanedPartitions);
+    if (!overloadedHubs.empty() && cv > settings.MinBalancingCVOverload) {
+        RelieveOverloadedHubs(overloadedHubs, budget - movementCost);
+    } 
+    
+    if (cv > settings.MinBalancingCV && movementCost < budget) {
+        BalancePartitions(healthyHubs, budget - movementCost);
     }
 }
 
@@ -187,14 +177,47 @@ void TPartitionBalancer::ApplyPartitionMap(const NDomain::TPartitionMap& partiti
     HashRing_.LoadPartitions(partitions);
 }
 
-void TPartitionBalancer::ApplyPartitionStates(const TPartitionStates& stat)
+void TPartitionBalancer::ApplyPartitionStates(const TPartitionStates& states)
 {
-    CoordinationState_.StateByPartition = stat;
+    CoordinationState_.StateByPartition = states;
 }
 
-void TPartitionBalancer::ApplyHubStates(const THubStates& stat)
+void TPartitionBalancer::ApplyHubStates(const THubStates& states)
 {
-    CoordinationState_.StateByHub = stat;
+    CoordinationState_.StateByHub = states;
+}
+
+std::unordered_set<NDomain::TPartitionId> TPartitionBalancer::CollectOrphanedPartitions(
+    const TClusterSnapshot& snapshot)
+{
+    std::unordered_set<NDomain::TPartitionId> orphanedPartitions{
+        HashRing_.GetAllPartitions().begin(),
+        HashRing_.GetAllPartitions().end(),
+    };
+
+    for (auto it = PartitionsByHub_.begin(); it != PartitionsByHub_.end(); ) {
+        const auto& endpoint = it->first;
+
+        if (snapshot.find(endpoint) == snapshot.end()) {
+            it = PartitionsByHub_.erase(it);
+        } else {
+            for (const auto& partition : it->second) {
+                orphanedPartitions.erase(partition);
+            }
+            ++it;
+        }
+    }
+
+
+    for (auto it = CoordinationState_.StateByHub.begin(); it != CoordinationState_.StateByHub.end(); ) {
+        if (snapshot.find(it->first) == snapshot.end()) {
+            it = CoordinationState_.StateByHub.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    return orphanedPartitions;
 }
 
 NDomain::EHubStatus TPartitionBalancer::DetermineHubStatus(
@@ -214,13 +237,20 @@ NDomain::EHubStatus TPartitionBalancer::DetermineHubStatus(
     return NDomain::EHubStatus::HEALTHY;
 }
 
-void TPartitionBalancer::DrainHub(
+void TPartitionBalancer::AbandonHub(
     const NDomain::THubEndpoint& hub,
     std::unordered_set<NDomain::TPartitionId>& orphanedPartitions)
 {
     for (const auto& partition : PartitionsByHub_.at(hub)) {
         orphanedPartitions.insert(partition);
     }
+}
+
+void TPartitionBalancer::DrainHub(
+    const NDomain::THubEndpoint& hub,
+    std::unordered_set<NDomain::TPartitionId>& orphanedPartitions)
+{
+    AbandonHub(hub, orphanedPartitions); // TODO в будущем заменить на плавную разгрузку в течение нескольких эпох
 }
 
 ////////////////////////////////////////////////////////////////////////////////

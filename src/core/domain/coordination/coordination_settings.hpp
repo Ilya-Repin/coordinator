@@ -1,18 +1,13 @@
 #pragma once
 
-#include <core/domain/common/coordination_params.hpp>
 #include <core/domain/common/hub_params.hpp>
-#include <core/domain/common/partition_params.hpp>
-
-#include <vector>
 
 namespace NCoordinator::NCore::NDomain {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct TPartitionMap {
-    std::vector<std::pair<TPartitionId, THubEndpoint>> Partitions; // sorted by partition id
-    TEpoch Epoch;
+struct TCoordinationSettings {
+    TLoadFactor OverloadThreshold;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -49,22 +49,29 @@ public:
   void ApplyHubStates(const THubStates& stat);
 
 private:
+  std::unordered_set<NDomain::TPartitionId> CollectOrphanedPartitions(
+    const TClusterSnapshot& snapshot);
+
   NDomain::EHubStatus DetermineHubStatus(
     const NDomain::THubState& hubState,
     const NDomain::THubReport& report,
     const TBalancingSettings& settings) const;
+
+  void AbandonHub(
+    const NDomain::THubEndpoint& hub,
+    std::unordered_set<NDomain::TPartitionId>& orphanedPartitions);
 
   void DrainHub(
     const NDomain::THubEndpoint& hub,
     std::unordered_set<NDomain::TPartitionId>& orphanedPartitions);
 
 private:
-  bool IsLeader_{false};
-  NDomain::TEpoch CoordinationEpoch_{0};
+  bool IsLeader_{};
+  NDomain::TEpoch CoordinationEpoch_{};
   NDomain::THashRing HashRing_{};
 
-  std::unordered_map<NDomain::THubEndpoint, std::unordered_set<NDomain::TPartitionId>> PartitionsByHub_;
-  TCoordinationState CoordinationState_;
+  std::unordered_map<NDomain::THubEndpoint, std::unordered_set<NDomain::TPartitionId>> PartitionsByHub_{};
+  TCoordinationState CoordinationState_{};
 };
 
 ////////////////////////////////////////////////////////////////////////////////
