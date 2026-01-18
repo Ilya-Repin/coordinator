@@ -1,8 +1,8 @@
 #pragma once
 
-#include <core/domain/common/hub_params.hpp>
-#include <core/domain/common/partition_params.hpp>
-#include <core/domain/common/coordination_params.hpp>
+#include <core/common/hub_params.hpp>
+#include <core/common/partition_params.hpp>
+#include <core/common/coordination_params.hpp>
 
 namespace NCoordinator::NCore::NDomain {
 
@@ -16,21 +16,24 @@ public:
         EHubStatus status,
         TLoadFactor loadFactor,
         TPartitionLoad expectedLoadGrowth,
-        TPartitionImpact partitionImpact);
+        TPartitionLoad partitionsLoad,
+        std::size_t totalPartitions);
 
     const THubEndpoint& GetEndpoint() const;
     const THubDC& GetDC() const;
     EHubStatus GetStatus() const;
     TLoadFactor GetLoadFactor() const;
     TPartitionLoad GetExpectedLoadGrowth() const;
-    TPartitionImpact GetPartitionImpact() const;
+    TPartitionLoad GetPartitionsLoad() const;
+    std::size_t GetTotalPartitions() const;
 
     void SetEndpoint(THubEndpoint endpoint);
     void SetDC(THubDC dc);
     void SetStatus(EHubStatus status);
     void SetLoadFactor(TLoadFactor loadFactor);
     void SetExpectedLoadGrowth(TPartitionLoad growth);
-    void SetPartitionImpact(TPartitionImpact impact);
+    void SetPartitionsLoad(TPartitionLoad load);
+    void SetTotalPartitions(std::size_t totalPartitions);
 
     void AddToExpectedLoadGrowth(TPartitionLoad growth);
 
@@ -40,7 +43,8 @@ private:
     EHubStatus Status_;
     TLoadFactor LoadFactor_;
     TPartitionLoad ExpectedLoadGrowth_; // For correct estimating of messages flow in partition
-    TPartitionImpact PartitionImpact_;
+    TPartitionLoad PartitionsLoad_;
+    std::size_t TotalPartitions_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

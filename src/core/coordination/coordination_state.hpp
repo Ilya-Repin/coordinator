@@ -1,13 +1,16 @@
 
 #pragma once
 
-#include <core/domain/common/coordination_params.hpp>
-#include <core/domain/coordination/coordination_context.hpp>
-#include <core/domain/coordination/coordination_settings.hpp>
-#include <core/domain/hub/hub_report.hpp>
-#include <core/domain/hub/hub_state.hpp>
-#include <core/domain/partition/partition_map.hpp>
-#include <core/domain/partition/partition_state.hpp>
+#include "coordination_context.hpp"
+#include "coordination_settings.hpp"
+
+#include <core/common/coordination_params.hpp>
+#include <core/common/hub_params.hpp>
+#include <core/common/partition_params.hpp>
+#include <core/hub/hub_report.hpp>
+#include <core/hub/hub_state.hpp>
+#include <core/partition/partition_map.hpp>
+#include <core/partition/partition_state.hpp>
 
 #include <unordered_map>
 
@@ -26,10 +29,15 @@ public:
         const TPartitionMap& partitionMap,
         const TClusterSnapshot& snapshot,
         const TCoordinationContext& context,
-        const TCoordinationSettings& settings);
+        const TStateBuildingSettings& settings);
 
-    const TPartitionState& GetPartitionState(const TPartitionId partition) const;
-    const THubState& GetHubState(const THubEndpoint& hub) const; 
+    TEpoch GetEpoch() const;
+
+    std::optional<std::reference_wrapper<const TPartitionState>> GetPartitionState(
+        const TPartitionId partition) const;
+
+    std::optional<std::reference_wrapper<const THubState>> GetHubState(
+        const THubEndpoint& hub) const; 
 
     const TPartitionStates& GetPartitionStates() const;
     const THubStates& GetHubStates() const;
@@ -41,13 +49,11 @@ private:
 
     void ApplyClusterSnapshot(
         const TClusterSnapshot& snapshot,
-        const TCoordinationContext& context,
-        const TCoordinationSettings& settings);
+        const TStateBuildingSettings& settings);
 
     NDomain::EHubStatus DetermineHubStatus(
         const NDomain::THubReport& hubReport,
-        const TCoordinationContext& context,
-        const TCoordinationSettings& settings) const;
+        const TStateBuildingSettings& settings) const;
 
 private:
     TEpoch Epoch_;

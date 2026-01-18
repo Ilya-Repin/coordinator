@@ -16,14 +16,4 @@ using TPartitionLoad = userver::utils::StrongTypedef<
     std::uint64_t,
     userver::utils::StrongTypedefOps::kCompareTransparent>;
 
-using TPartitionImpact = userver::utils::StrongTypedef<
-    struct TPartitionLoadTag,
-    double,
-    userver::utils::StrongTypedefOps::kCompareTransparent>;
-
-enum class EPartitionStatus {
-    ACTIVE,
-    MIGRATED,
-};
-
 }  // namespace NCoordinator::NCore::NDomain

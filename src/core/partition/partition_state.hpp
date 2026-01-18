@@ -1,11 +1,9 @@
 
 #pragma once
 
-#include <core/domain/common/coordination_params.hpp>
-#include <core/domain/common/hub_params.hpp>
-#include <core/domain/common/partition_params.hpp>
-
-#include <optional>
+#include <core/common/coordination_params.hpp>
+#include <core/common/hub_params.hpp>
+#include <core/common/partition_params.hpp>
 
 namespace NCoordinator::NCore::NDomain {
 
@@ -17,23 +15,23 @@ public:
         TPartitionId id,
         TEpoch lastMigrationEpoch,
         TPartitionLoad observedLoad,
-        std::optional<THubEndpoint> hub);
+        THubEndpoint hub);
 
     TPartitionId GetId() const;
-    TEpoch GetLastMigrationEpoch() const;
+    TEpoch GetMigrationFreezeEpoch() const;
     TPartitionLoad GetObservedLoad() const;
-    const std::optional<THubEndpoint>& GetHub() const;
+    const THubEndpoint& GetAssignedHub() const;
 
     void SetId(TPartitionId id);
-    void SetLastMigrationEpoch(TEpoch epoch);
+    void SetMigrationFreezeEpoch(TEpoch epoch);
     void SetObservedLoad(TPartitionLoad load);
-    void SetHub(std::optional<THubEndpoint> hub);
+    void SetAssignedHub(THubEndpoint hub);
 
 private:
     TPartitionId Id_;
-    TEpoch LastMigrationEpoch_;
+    TEpoch MigrationFreezeEpoch_;
     TPartitionLoad ObservedLoad_;
-    std::optional<THubEndpoint> Hub_;
+    THubEndpoint AssignedHub_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

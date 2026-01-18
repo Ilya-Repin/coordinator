@@ -12,13 +12,15 @@ THubState::THubState(
     EHubStatus status,
     TLoadFactor loadFactor,
     TPartitionLoad expectedLoadGrowth,
-    TPartitionImpact partitionImpact)
+    TPartitionLoad partitionsLoad,
+    std::size_t totalPartitions)
     : Endpoint_(std::move(endpoint))
     , DC_(std::move(dc))
     , Status_(status)
     , LoadFactor_(loadFactor)
     , ExpectedLoadGrowth_(expectedLoadGrowth)
-    , PartitionImpact_(partitionImpact)
+    , PartitionsLoad_(partitionsLoad)
+    , TotalPartitions_(totalPartitions)
 { }
 
 const THubEndpoint& THubState::GetEndpoint() const
@@ -46,9 +48,14 @@ TPartitionLoad THubState::GetExpectedLoadGrowth() const
     return ExpectedLoadGrowth_;
 }
 
-TPartitionImpact THubState::GetPartitionImpact() const
+TPartitionLoad THubState::GetPartitionsLoad() const
 {
-    return PartitionImpact_;
+    return PartitionsLoad_;
+}
+
+std::size_t THubState::GetTotalPartitions() const
+{
+    return TotalPartitions_;
 }
 
 void THubState::SetEndpoint(THubEndpoint endpoint)
@@ -76,9 +83,14 @@ void THubState::SetExpectedLoadGrowth(TPartitionLoad growth)
     ExpectedLoadGrowth_ = growth;
 }
 
-void THubState::SetPartitionImpact(TPartitionImpact impact) 
+void THubState::SetPartitionsLoad(TPartitionLoad load)
 {
-    PartitionImpact_ = impact;
+    PartitionsLoad_ = load;
+}
+
+void THubState::SetTotalPartitions(std::size_t totalPartitions)
+{
+    TotalPartitions_ = totalPartitions;
 }
 
 void THubState::AddToExpectedLoadGrowth(TPartitionLoad growth)

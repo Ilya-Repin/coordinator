@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/domain/common/partition_params.hpp>
+#include <core/common/partition_params.hpp>
 
 #include <vector>
 #include <string>

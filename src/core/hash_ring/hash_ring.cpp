@@ -1,4 +1,4 @@
-#include "ring.hpp"
+#include "hash_ring.hpp"
 
 #include <algorithm>
 #include <stdexcept>

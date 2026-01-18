@@ -1,8 +1,8 @@
 #pragma once
 
-#include <core/domain/common/hub_params.hpp>
-#include <core/domain/common/partition_params.hpp>
-#include <core/domain/common/coordination_params.hpp>
+#include <core/common/hub_params.hpp>
+#include <core/common/partition_params.hpp>
+#include <core/common/coordination_params.hpp>
 
 #include <unordered_map>
 
@@ -12,7 +12,7 @@ namespace NCoordinator::NCore::NDomain {
 
 class THubReport {
 public:
-    using TPartitionLoads = std::unordered_map<TPartitionId, std::pair<TPartitionLoad, EPartitionStatus>>;
+    using TPartitionLoads = std::unordered_map<TPartitionId, TPartitionLoad>;
 public:
     THubReport(
         TEpoch epoch,

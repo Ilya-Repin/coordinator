@@ -8,13 +8,13 @@ namespace NCoordinator::NCore::NDomain {
 
 TPartitionState::TPartitionState(
     TPartitionId id,
-    TEpoch lastMigrationEpoch,
+    TEpoch migrationFreezeEpoch,
     TPartitionLoad observedLoad,
-    std::optional<THubEndpoint> hub)
+    THubEndpoint assignedHub)
     : Id_(id)
-    , LastMigrationEpoch_(lastMigrationEpoch)
+    , MigrationFreezeEpoch_(migrationFreezeEpoch)
     , ObservedLoad_(observedLoad)
-    , Hub_(std::move(hub))
+    , AssignedHub_(std::move(assignedHub))
 { }
 
 TPartitionId TPartitionState::GetId() const
@@ -22,9 +22,9 @@ TPartitionId TPartitionState::GetId() const
     return Id_;
 }
 
-TEpoch TPartitionState::GetLastMigrationEpoch() const
+TEpoch TPartitionState::GetMigrationFreezeEpoch() const
 {
-    return LastMigrationEpoch_;
+    return MigrationFreezeEpoch_;
 }
 
 TPartitionLoad TPartitionState::GetObservedLoad() const
@@ -32,9 +32,9 @@ TPartitionLoad TPartitionState::GetObservedLoad() const
     return ObservedLoad_;
 }
 
-const std::optional<THubEndpoint>& TPartitionState::GetHub() const
+const THubEndpoint& TPartitionState::GetAssignedHub() const
 {
-    return Hub_;
+    return AssignedHub_;
 }
 
 void TPartitionState::SetId(TPartitionId id)
@@ -42,9 +42,9 @@ void TPartitionState::SetId(TPartitionId id)
     Id_ = id;
 }
 
-void TPartitionState::SetLastMigrationEpoch(TEpoch epoch)
+void TPartitionState::SetMigrationFreezeEpoch(TEpoch epoch)
 {
-    LastMigrationEpoch_ = epoch;
+    MigrationFreezeEpoch_ = epoch;
 }
 
 void TPartitionState::SetObservedLoad(TPartitionLoad load)
@@ -52,9 +52,9 @@ void TPartitionState::SetObservedLoad(TPartitionLoad load)
     ObservedLoad_ = load;
 }
 
-void TPartitionState::SetHub(std::optional<THubEndpoint> hub)
+void TPartitionState::SetAssignedHub(THubEndpoint hub)
 {
-    Hub_ = std::move(hub);
+    AssignedHub_ = std::move(hub);
 }
 
 } // namespace NCoordinator::NCore::NDomain
