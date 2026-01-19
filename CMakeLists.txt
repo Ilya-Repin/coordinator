@@ -17,16 +17,23 @@ endif()
 userver_setup_environment()
 
 # Common sources
+
+file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
+file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp)
+file(GLOB_RECURSE BENCHMARK_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_benchmark.cpp)
+file(GLOB_RECURSE LIBUBENCH_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/benchmarks_main.cpp)
+list(REMOVE_ITEM SOURCES ${BENCH_SOURCES} ${LIBUBENCH_SOURCES})
+list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCHMARK_SOURCES} ${LIBUBENCH_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
 include_directories(src)
 
 add_library(
     ${PROJECT_NAME}_objs OBJECT
-    src/greeting.cpp #
-    src/hello.cpp #
+    ${SOURCES}
 )
 target_link_libraries(
     ${PROJECT_NAME}_objs
-    PUBLIC userver::core #
+    PUBLIC userver::core userver::ydb
 )
 
 
@@ -45,7 +52,9 @@ target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${PROJECT_NAME}_objs use
 add_google_benchmark_tests(${PROJECT_NAME}_benchmark)
 
 # Functional testing
-userver_testsuite_add_simple()
+userver_testsuite_add_simple(
+    REQUIREMENTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/requirements.txt
+)
 
 # Install
 include(GNUInstallDirs)

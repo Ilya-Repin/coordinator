@@ -29,6 +29,9 @@ components_manager:
             # See userver "dynamic config" docs for what configs exist.
             defaults:
                 HTTP_CLIENT_CONNECTION_POOL_SIZE: 1000
+        
+        default-secdist-provider:
+            config: secure_data.json
 
         testsuite-support: {}
 
@@ -47,6 +50,30 @@ components_manager:
             path: /tests/{action}
             method: POST
             task_processor: main-task-processor
+
+        ydb:
+            operation-settings:
+                cancel-after: 1000ms
+                client-timeout: 1100ms
+                operation-timeout: 1000ms
+                retries: 3
+            databases:
+                db:
+                    database: chat_db
+                    max_pool_size: 10
+                    min_pool_size: 5
+
+        coordination-gateway:
+            dbname: chat_db
+            coordination-node: chat-coordination
+            semaphore-name: partition-map-lock
+            initial-setup: true
+
+        coordination-dist-lock:
+            database-settings:
+                dbname: chat_db
+                coordination-node: chat-coordination
+            semaphore-name: partition-map-lock
 
         handler-ping:
             path: /ping
