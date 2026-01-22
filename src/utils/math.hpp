@@ -9,17 +9,21 @@ namespace NCoordinator::NUtils::NMath {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <std::ranges::range Range, typename Projection = std::identity>
-std::uint64_t CalculateCV2(Range&& range, Projection proj = {}) {
+template <std::ranges::forward_range Range, typename Projection = std::identity>
+std::uint64_t CalculateCV(Range&& range, Projection proj = {})
+{
     auto nums = range | std::views::transform(proj);
 
-    if (nums.empty()) {
+    if (std::ranges::empty(nums)) {
         return 0;
     }
 
-    const auto sum = std::accumulate(nums.begin(), nums.end(), 0);
+    using valueType = std::ranges::range_value_t<decltype(nums)>;
+    const auto sum = std::accumulate(std::ranges::begin(nums), 
+                                     std::ranges::end(nums), 
+                                     static_cast<valueType>(0));
 
-    const long double mean = static_cast<long double>(sum) / nums.size();
+    const long double mean = static_cast<long double>(sum) / std::ranges::size(nums);
     if (mean == 0.0L) {
         return 0;
     }
@@ -29,13 +33,13 @@ std::uint64_t CalculateCV2(Range&& range, Projection proj = {}) {
         const long double diff = static_cast<long double>(num) - mean;
         variance += diff * diff;
     }
-    variance /= nums.size();
+    variance /= std::ranges::size(nums);
 
     const long double stddev = std::sqrt(variance);
 
     const long double cv = stddev / mean;
 
-    return static_cast<std::size_t>(std::llround(cv));
+    return static_cast<std::uint64_t>(std::llround(cv * 100));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

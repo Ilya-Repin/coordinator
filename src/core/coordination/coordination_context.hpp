@@ -12,8 +12,8 @@ namespace NCoordinator::NCore::NDomain {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct TCoordinationContext {
-    std::unordered_map<TPartitionId, TEpoch> PartitionLastMigrations;
-    std::unordered_map<TPartitionId, TPartitionLoad> PartitionLoads; 
+    std::unordered_map<TPartitionId, TEpoch> PartitionCooldowns;
+    std::unordered_map<TPartitionId, TPartitionWeight> PartitionWeights; 
 };
 
 ////////////////////////////////////////////////////////////////////////////////

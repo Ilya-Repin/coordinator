@@ -10,8 +10,9 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct TPredictionParams {
+    bool Increasing;
     std::size_t TotalPartitions;
-    NDomain::TPartitionLoad PartitionsLoad;
+    NDomain::TPartitionWeight PartitionsWeight;
     NDomain::TLoadFactor OriginalLoadFactor;
 };
 
@@ -19,7 +20,7 @@ class ILoadFactorPredictor {
 public:
     virtual NDomain::TLoadFactor PredictLoadFactor(
         const NDomain::TLoadFactor loadFactor,
-        const NDomain::TPartitionLoad partitionLoad,
+        const NDomain::TPartitionWeight partitionWeight,
         const TPredictionParams& params) const = 0;
 
     virtual ~ILoadFactorPredictor() = default;

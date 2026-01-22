@@ -1,5 +1,6 @@
 #include "coordination_state.hpp"
 
+#include <optional>
 #include <unordered_map>
 
 namespace NCoordinator::NCore::NDomain {
@@ -13,6 +14,8 @@ TCoordinationState::TCoordinationState(
     const TStateBuildingSettings& settings)
 {
     Epoch_ = partitionMap.Epoch;
+    AveragePartitionWeight_ = TPartitionWeight{0};
+
     InitializePartitionStates(partitionMap, context);
     ApplyClusterSnapshot(snapshot, settings);
 }
@@ -22,20 +25,19 @@ TEpoch TCoordinationState::GetEpoch() const
     return Epoch_;
 }
 
-std::optional<std::reference_wrapper<const TPartitionState>> TCoordinationState::GetPartitionState(const TPartitionId partition) const
+TPartitionWeight TCoordinationState::GetAveragePartitionWeight() const
 {
-    if (auto it = PartitionStates_.find(partition); it != PartitionStates_.end()) {
-        return std::cref(it->second);
-    }
-    return std::nullopt;
+    return AveragePartitionWeight_;
 }
 
-std::optional<std::reference_wrapper<const THubState>> TCoordinationState::GetHubState(const THubEndpoint& hub) const
+const TPartitionState& TCoordinationState::GetPartitionState(const TPartitionId partition) const
 {
-    if (auto it = HubStates_.find(hub); it != HubStates_.end()) {
-        return std::cref(it->second);
-    }
-    return std::nullopt;
+    return PartitionStates_.at(partition);
+}
+
+const THubState& TCoordinationState::GetHubState(const THubEndpoint& hub) const
+{
+    return HubStates_.at(hub);
 }
 
 const TCoordinationState::TPartitionStates& TCoordinationState::GetPartitionStates() const
@@ -52,20 +54,34 @@ void TCoordinationState::InitializePartitionStates(
     const TPartitionMap& partitionMap,
     const TCoordinationContext& context)
 {
-    for (const auto& [partition, hub] : partitionMap.Partitions) {
-        TPartitionState& state = PartitionStates_[partition];
-        state.SetId(partition);
-        state.SetAssignedHub(hub);
-        
-        auto itMigration = context.PartitionLastMigrations.find(partition);
-        state.SetLastMigrationEpoch(itMigration != context.PartitionLastMigrations.end()
-            ? itMigration->second
-            : TEpoch{0});
+    std::size_t partitionsWithObservedWeight = 0;
+    auto sumPartitionWeight = TPartitionWeight{0};
 
-        auto itLoad = context.PartitionLoads.find(partition);
-        state.SetObservedLoad(itLoad != context.PartitionLoads.end()
-            ? itLoad->second
-            : TPartitionLoad{0});
+    for (const auto& [partition, hub] : partitionMap.Partitions) {
+        auto& state = PartitionStates_[partition];
+        state.Id = partition;
+        state.AssignedHub = hub;
+
+        auto itWeight = context.PartitionWeights.find(partition);
+        state.ObservedWeight = itWeight != context.PartitionWeights.end()
+            ? std::make_optional(itWeight->second)
+            : std::nullopt;
+
+        auto itMigration = context.PartitionCooldowns.find(partition);
+        state.MigrationCooldown = itMigration != context.PartitionCooldowns.end()
+            ? std::make_optional(itMigration->second)
+            : std::nullopt;
+
+        if (const auto& weight = state.ObservedWeight) {
+            sumPartitionWeight += weight.value();
+            ++partitionsWithObservedWeight;
+        }
+    }
+
+    if (partitionsWithObservedWeight > 0) {
+        AveragePartitionWeight_ = TPartitionWeight{
+            sumPartitionWeight.GetUnderlying() / partitionsWithObservedWeight
+        }; // integer division
     }
 }
 
@@ -73,41 +89,57 @@ void TCoordinationState::ApplyClusterSnapshot(
     const TClusterSnapshot& snapshot,
     const TStateBuildingSettings& settings)
 {
-    std::unordered_map<THubEndpoint, TPartitionLoad::UnderlyingType> expectedLoadGrowths;
+    std::unordered_map<THubEndpoint, TPartitionWeight> expectedWeightGrowths;
 
     for (const auto& [hub, report] : snapshot) {
         THubState& state = HubStates_[hub];
 
-        state.SetEndpoint(report.GetEndpoint());
-        state.SetDC(report.GetDC());
-        state.SetStatus(DetermineHubStatus(report, settings));
-        state.SetLoadFactor(report.GetLoadFactor());
+        state.Endpoint = report.Endpoint;
+        state.DC = report.DC;
+        state.Status = DetermineHubStatus(report, settings);
+        state.LoadFactor = report.LoadFactor;
 
-        TPartitionLoad::UnderlyingType sumPartitionLoad = 0;
+        auto sumPartitionWeight = TPartitionWeight{0};
 
-        for (const auto& [id, load] : report.GetPartitionLoads()) {
-            sumPartitionLoad += load.GetUnderlying();
+        for (const auto& [id, weight] : report.PartitionWeights) {
+            sumPartitionWeight += weight;
 
             if (auto it = PartitionStates_.find(id); it != PartitionStates_.end()) {
-                auto cachedLoad = it->second.GetObservedLoad();
+                auto& [_, partitionState] = *it;
+                auto cachedWeight = partitionState.ObservedWeight;
 
-                if (cachedLoad > load) {
-                    expectedLoadGrowths[it->second.GetAssignedHub()] +=
-                        cachedLoad.GetUnderlying() - load.GetUnderlying();
+                if (cachedWeight.has_value() && cachedWeight.value() > weight) {
+                    auto expectedWeightGrowth = cachedWeight.value() - weight;
+                    
+                    expectedWeightGrowths[partitionState.AssignedHub] += expectedWeightGrowth;
+                    partitionState.ExpectedWeightGrowth = expectedWeightGrowth;
                 }
 
-                it->second.SetObservedLoad(load);
+                partitionState.ObservedWeight = weight;
             }
         }
 
-        state.SetPartitionsLoad(TPartitionLoad{sumPartitionLoad});
-        state.SetTotalPartitions(report.GetPartitionLoads().size());
+        state.PartitionsWeight = sumPartitionWeight;
+        state.TotalPartitions = report.PartitionWeights.size();
     }
 
+    auto sumPartitionWeight = TPartitionWeight{0};
+    std::size_t totalPartitions = 0;
+
     for (auto& [hub, state] : HubStates_) {
-        if (auto it = expectedLoadGrowths.find(hub); it != expectedLoadGrowths.end()) {
-            state.AddToExpectedLoadGrowth(TPartitionLoad{it->second});
+        if (auto it = expectedWeightGrowths.find(hub); it != expectedWeightGrowths.end()) {
+            state.ExpectedWeightGrowth += it->second;
         }
+        sumPartitionWeight += state.PartitionsWeight;
+        totalPartitions += state.TotalPartitions;
+    }
+
+    if (totalPartitions > 0) {
+        auto averageWeight = TPartitionWeight{
+            sumPartitionWeight.GetUnderlying() / totalPartitions
+        }; // integer division
+
+        AveragePartitionWeight_ = std::max(averageWeight, AveragePartitionWeight_);
     }
 }
 
@@ -115,13 +147,13 @@ NDomain::EHubStatus TCoordinationState::DetermineHubStatus(
     const NDomain::THubReport& hubReport,
     const TStateBuildingSettings& settings) const
 {
-    if (settings.BlockedDCs.contains(hubReport.GetDC()) || settings.BlockedHubs.contains(hubReport.GetEndpoint())) {
+    if (settings.BlockedDCs.contains(hubReport.DC) || settings.BlockedHubs.contains(hubReport.Endpoint)) {
         return NDomain::EHubStatus::DRAINING;
     }
-    if (hubReport.GetEpoch() != Epoch_) {
+    if (hubReport.Epoch != Epoch_) {
         return NDomain::EHubStatus::LAGGED;
     }
-    if (hubReport.GetLoadFactor() >= settings.OverloadThreshold) {
+    if (hubReport.LoadFactor >= settings.OverloadThreshold) {
         return NDomain::EHubStatus::OVERLOADED;
     }
 

@@ -33,13 +33,16 @@ public:
 
     TEpoch GetEpoch() const;
 
-    std::optional<std::reference_wrapper<const TPartitionState>> GetPartitionState(
+    TPartitionWeight GetAveragePartitionWeight() const;
+
+    const TPartitionState& GetPartitionState(
         const TPartitionId partition) const;
 
-    std::optional<std::reference_wrapper<const THubState>> GetHubState(
+    const THubState& GetHubState(
         const THubEndpoint& hub) const; 
 
     const TPartitionStates& GetPartitionStates() const;
+
     const THubStates& GetHubStates() const;
 
 private:
@@ -57,6 +60,7 @@ private:
 
 private:
     TEpoch Epoch_;
+    TPartitionWeight AveragePartitionWeight_;
     TPartitionStates PartitionStates_;
     THubStates HubStates_;
 };
