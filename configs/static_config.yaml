@@ -58,7 +58,7 @@ components_manager:
                 operation-timeout: 1000ms
                 retries: 3
             databases:
-                db:
+                chat_db:
                     database: chat_db
                     max_pool_size: 10
                     min_pool_size: 5

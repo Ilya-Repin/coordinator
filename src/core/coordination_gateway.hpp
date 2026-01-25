@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/partitions/partition_map.hpp>
+#include <core/partition/partition_map.hpp>
 
 namespace NCoordinator::NCore {
 

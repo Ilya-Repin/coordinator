@@ -3,7 +3,7 @@
 #include <core/common/hub_params.hpp>
 #include <core/common/partition_params.hpp>
 #include <core/common/coordination_params.hpp>
-#include <core/partitions/partition_map.hpp>
+#include <core/partition/partition_map.hpp>
 
 #include <userver/formats/json/value.hpp>
 

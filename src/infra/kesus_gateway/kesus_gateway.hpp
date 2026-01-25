@@ -1,7 +1,7 @@
 #pragma once
 
 #include <core/coordination_gateway.hpp>
-#include <core/partitions/partition_map.hpp>
+#include <core/partition/partition_map.hpp>
 
 #include <userver/ydb/coordination.hpp>
 
