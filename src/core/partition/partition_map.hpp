@@ -10,8 +10,10 @@ namespace NCoordinator::NCore::NDomain {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+using TAssignedPartition = std::pair<TPartitionId, THubEndpoint>;
+
 struct TPartitionMap {
-    std::vector<std::pair<TPartitionId, THubEndpoint>> Partitions; // sorted by partition id
+    std::vector<TAssignedPartition> Partitions; // sorted by partition id
     TEpoch Epoch;
 };
 

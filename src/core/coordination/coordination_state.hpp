@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "coordination_context.hpp"

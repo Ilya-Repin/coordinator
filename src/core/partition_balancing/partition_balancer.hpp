@@ -14,13 +14,12 @@ namespace NCoordinator::NCore {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TPartitionBalancer {
-public:
-    struct TBalancingResult {
-        NDomain::TPartitionMap PartitionMap;
-        NDomain::TCoordinationContext Context;
-    };
+struct TBalancingResult {
+    NDomain::TPartitionMap PartitionMap;
+    NDomain::TCoordinationContext Context;
+};
 
+class TPartitionBalancer {
 public:
     explicit TPartitionBalancer(TLoadFactorPredictorPtr predictor);
 

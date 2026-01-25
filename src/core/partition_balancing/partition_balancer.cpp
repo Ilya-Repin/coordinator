@@ -10,7 +10,7 @@ TPartitionBalancer::TPartitionBalancer(TLoadFactorPredictorPtr predictor)
     : LoadFactorPredictor_(std::move(predictor))
 { }
 
-TPartitionBalancer::TBalancingResult TPartitionBalancer::BalancePartitions(
+TBalancingResult TPartitionBalancer::BalancePartitions(
     const NDomain::TCoordinationState& state,
     const TBalancingSettings& settings) const
 {

@@ -15,7 +15,7 @@ struct THubState {
     TLoadFactor LoadFactor;
     TPartitionWeight ExpectedWeightGrowth;
     TPartitionWeight PartitionsWeight;
-    std::size_t TotalPartitions;
+    std::size_t TotalPartitions{};
 };
 
 ////////////////////////////////////////////////////////////////////////////////

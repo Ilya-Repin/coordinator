@@ -11,14 +11,14 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct TBalancingSettings {
-    std::size_t MaxRebalancePhases;
+    std::size_t MaxRebalancePhases{};
     NDomain::TPartitionWeight MigratingWeightLimit;
     NDomain::TLoadFactor MinLoadFactorDelta;
     NDomain::TPartitionWeight MigrationBudgetThreshold;
-    std::uint64_t BalancingThresholdCV;
-    std::uint64_t BalancingTargetCV;
+    std::uint64_t BalancingThresholdCV{};
+    std::uint64_t BalancingTargetCV{};
     NDomain::TEpoch MinMigrationCooldown;
-    double MigrationWeightPenaltyCoeff;
+    double MigrationWeightPenaltyCoeff{};
 };
 
 ////////////////////////////////////////////////////////////////////////////////

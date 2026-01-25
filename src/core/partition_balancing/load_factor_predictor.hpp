@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <core/common/hub_params.hpp>
@@ -10,8 +9,8 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct TPredictionParams {
-    bool Increasing;
-    std::size_t TotalPartitions;
+    bool Increasing{};
+    std::size_t TotalPartitions{};
     NDomain::TPartitionWeight PartitionsWeight;
     NDomain::TLoadFactor OriginalLoadFactor;
 };
