@@ -15,17 +15,6 @@ struct TStateBuildingSettings {
     TLoadFactor OverloadThreshold;
 };
 
-struct TBalancingSettings { // move to partition balancer
-    std::size_t MaxRebalancePhases;
-    NDomain::TPartitionWeight MigratingWeightLimit;
-    NDomain::TLoadFactor MinLoadFactorDelta;
-    NDomain::TPartitionWeight MigrationBudgetThreshold;
-    std::uint64_t BalancingThresholdCV;
-    std::uint64_t BalancingTargetCV;
-    NDomain::TEpoch MinMigrationCooldown;
-    double MigrationWeightPenaltyCoeff;
-};
-
 ////////////////////////////////////////////////////////////////////////////////
 
 } // namespace NCoordinator::NCore::NDomain

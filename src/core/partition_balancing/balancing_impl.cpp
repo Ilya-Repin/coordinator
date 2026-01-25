@@ -124,7 +124,7 @@ void RebalancePartitions(
     TMigrationContext& migrationContext,
     const TLoadFactorPredictorPtr& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings)
+    const TBalancingSettings& settings)
 {
     const auto sortedHubsProj = [](const auto& hub) { return hub.first.GetUnderlying(); };
 
@@ -175,7 +175,7 @@ void ExecuteRebalancingPhase(
     TMigrationContext& migrationContext,
     const TLoadFactorPredictorPtr& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings)
+    const TBalancingSettings& settings)
 {
     TSortedHubs processedHubs;
     while (sortedHubs.size() >= 2) {
@@ -266,7 +266,7 @@ TPredictionParams BuildPredictionParams(
 NDomain::TCoordinationContext BuildCoordinationContext(
     TMigratingPartitions& migratingPartitions,
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings)
+    const TBalancingSettings& settings)
 {
     NDomain::TCoordinationContext context;
 

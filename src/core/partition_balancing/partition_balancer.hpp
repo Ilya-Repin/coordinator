@@ -1,5 +1,6 @@
 #pragma once
 
+#include "balancing_settings.hpp"
 #include "load_factor_predictor.hpp"
 
 #include <core/common/coordination_params.hpp>
@@ -25,7 +26,7 @@ public:
 
     TBalancingResult BalancePartitions(
         const NDomain::TCoordinationState& state,
-        const NDomain::TBalancingSettings& settings) const;
+        const TBalancingSettings& settings) const;
 
 private:
     TLoadFactorPredictorPtr LoadFactorPredictor_;

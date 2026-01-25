@@ -12,7 +12,7 @@ TPartitionBalancer::TPartitionBalancer(TLoadFactorPredictorPtr predictor)
 
 TPartitionBalancer::TBalancingResult TPartitionBalancer::BalancePartitions(
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings) const
+    const TBalancingSettings& settings) const
 {
     auto [activeHubs, sortedHubs] = NDetail::CollectActiveHubs(state, LoadFactorPredictor_);
 

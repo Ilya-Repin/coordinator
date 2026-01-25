@@ -59,7 +59,7 @@ TEST_F(ExecuteRebalancingPhaseTest, MovesPartitionWhenImbalanceIsHigh) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-min"), LF(10), {});
 
     TMigrationContext migrationContext;
-    NDomain::TBalancingSettings settings;
+    TBalancingSettings settings;
     settings.MinLoadFactorDelta = LF(10);
     settings.MigratingWeightLimit = PW(1000);
 
@@ -109,7 +109,7 @@ TEST_F(ExecuteRebalancingPhaseTest, SkipsMigrationIfCooldownIsActive) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-min"), LF(10), {});
 
     TMigrationContext migrationContext;
-    NDomain::TBalancingSettings settings;
+    TBalancingSettings settings;
 
     EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
 
@@ -135,7 +135,7 @@ TEST_F(ExecuteRebalancingPhaseTest, StopsIfDeltaIsTooSmall) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-2"), LF(50), {});
 
     TMigrationContext migrationContext;
-    NDomain::TBalancingSettings settings;
+    TBalancingSettings settings;
     settings.MinLoadFactorDelta = LF(10);
 
     EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
@@ -162,7 +162,7 @@ TEST_F(ExecuteRebalancingPhaseTest, PreventsOvershoot) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-min"), LF(90), {});
 
     TMigrationContext migrationContext;
-    NDomain::TBalancingSettings settings;
+    TBalancingSettings settings;
     settings.MinLoadFactorDelta = LF(5);
 
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(100), PW(30), _)).WillRepeatedly(Return(LF(70)));
@@ -193,7 +193,7 @@ TEST_F(ExecuteRebalancingPhaseTest, UpdatesContextWhenCancellingMigration) {
     migrationContext.MigratingPartitions.emplace(PID(1), HUB("hub-min"));
     migrationContext.TotalMigratingWeight = PW(50);
 
-    NDomain::TBalancingSettings settings;
+    TBalancingSettings settings;
 
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(80), PW(10), _)).WillRepeatedly(Return(LF(70)));
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(20), PW(10), _)).WillRepeatedly(Return(LF(30)));

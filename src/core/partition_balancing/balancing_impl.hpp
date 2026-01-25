@@ -1,5 +1,6 @@
 #pragma once
 
+#include "balancing_settings.hpp"
 #include "load_factor_predictor.hpp"
 
 #include <core/common/coordination_params.hpp>
@@ -57,7 +58,7 @@ void RebalancePartitions(
     TMigrationContext& migrationContext,
     const TLoadFactorPredictorPtr& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings);
+    const TBalancingSettings& settings);
 
 void ExecuteRebalancingPhase(
     TSortedHubs& sortedHubs, 
@@ -65,7 +66,7 @@ void ExecuteRebalancingPhase(
     TMigrationContext& migrationContext,
     const TLoadFactorPredictorPtr& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings);
+    const TBalancingSettings& settings);
 
 TPredictionParams BuildPredictionParams(
     const bool increasing,
@@ -75,7 +76,7 @@ TPredictionParams BuildPredictionParams(
 NDomain::TCoordinationContext BuildCoordinationContext(
     TMigratingPartitions& migratingPartitions,
     const NDomain::TCoordinationState& state,
-    const NDomain::TBalancingSettings& settings);
+    const TBalancingSettings& settings);
 
 ////////////////////////////////////////////////////////////////////////////////
 
