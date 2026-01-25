@@ -10,6 +10,7 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 using namespace testing;
+using namespace NDetail;
 using namespace NDomain;
 
 class SeparatePartitionsTest
@@ -51,10 +52,10 @@ TEST_F(SeparatePartitionsTest, CorrectLabelsAndSortsOrphanedPartitions) {
     EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _))
         .WillOnce(Return(TLoadFactor{25}));
 
-    auto [activeHubs, sortedHubs] = NDetail::CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
     ASSERT_EQ(activeHubs.size(), 1);
 
-    auto result = NDetail::SeparatePartitions(state, activeHubs);
+    auto result = SeparatePartitions(state, activeHubs);
     EXPECT_EQ(result.first.size(), 2);
     EXPECT_EQ(result.first[0].second, HUB("hub-active"));
     EXPECT_EQ(result.first[1].second, HUB("hub-active"));
@@ -94,10 +95,10 @@ TEST_F(SeparatePartitionsTest, FallbackToAverageWeightWhenObservedMissing) {
     TCoordinationState state(map, snapshot, context, settings);
     ASSERT_EQ(state.GetAveragePartitionWeight(), PW(200));
     
-    NDetail::THubEndpoints activeHubs;
+    THubEndpoints activeHubs;
     activeHubs.insert(HUB("hub-active"));
 
-    auto result = NDetail::SeparatePartitions(state, activeHubs);
+    auto result = SeparatePartitions(state, activeHubs);
 
     // 1. Assigned (PID 1)
     ASSERT_EQ(result.first.size(), 1);
@@ -139,9 +140,9 @@ TEST_F(SeparatePartitionsTest, SortsOrphansByCalculatedWeightDescending) {
     };
     TCoordinationState state(map, snapshot, context, settings);
     
-    NDetail::THubEndpoints activeHubs;
+    THubEndpoints activeHubs;
 
-    auto result = NDetail::SeparatePartitions(state, activeHubs);
+    auto result = SeparatePartitions(state, activeHubs);
 
     ASSERT_EQ(result.first.size(), 0);
     ASSERT_EQ(result.second.size(), 3);
@@ -175,10 +176,10 @@ TEST_F(SeparatePartitionsTest, AllHubsActiveNoOrphans) {
     };
     TCoordinationState state(map, snapshot, context, settings);
 
-    NDetail::THubEndpoints activeHubs;
+    THubEndpoints activeHubs;
     activeHubs.insert(HUB("hub-1"));
 
-    auto result = NDetail::SeparatePartitions(state, activeHubs);
+    auto result = SeparatePartitions(state, activeHubs);
 
     EXPECT_EQ(result.first.size(), 1); // Assigned
     EXPECT_EQ(result.second.size(), 0); // Orphans empty
@@ -209,9 +210,9 @@ TEST_F(SeparatePartitionsTest, AddsExpectedGrowthToWeight) {
     };
     TCoordinationState state(map, snapshot, context, settings);
 
-    NDetail::THubEndpoints activeHubs;
+    THubEndpoints activeHubs;
     
-    auto result = NDetail::SeparatePartitions(state, activeHubs);
+    auto result = SeparatePartitions(state, activeHubs);
 
     ASSERT_EQ(result.second.size(), 1);
     EXPECT_EQ(result.second[0].first, PW(150));

@@ -10,6 +10,7 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 using namespace testing;
+using namespace NDetail;
 using namespace NDomain;
 
 class CollectActiveHubsTest
@@ -69,7 +70,7 @@ TEST_F(CollectActiveHubsTest, FiltersDrainingLaggedOfflineHubs) {
     EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _))
         .WillOnce(Return(TLoadFactor{15}));
 
-    auto [activeHubs, sortedHubs] = NDetail::CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
 
     EXPECT_EQ(activeHubs.size(), 1);
     EXPECT_TRUE(activeHubs.contains(HUB("hub-active")));
@@ -119,7 +120,7 @@ TEST_F(CollectActiveHubsTest, SortsHubsByForecastedLoad) {
             return current == TLoadFactor{80} ? TLoadFactor{85} : TLoadFactor{95};
         }));
 
-    auto [activeHubs, sortedHubs] = NDetail::CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
 
     ASSERT_EQ(sortedHubs.size(), 2);
     auto it = sortedHubs.begin();
@@ -158,7 +159,7 @@ TEST_F(CollectActiveHubsTest, PassesCorrectParamsToPredictor) {
         Field(&TPredictionParams::TotalPartitions, 1)
     )).WillOnce(Return(LF(60)));
 
-    auto [activeHubs, sortedHubs] = NDetail::CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
 
     ASSERT_EQ(sortedHubs.size(), 1);
     ASSERT_EQ(activeHubs.size(), 1);
@@ -191,7 +192,7 @@ TEST_F(CollectActiveHubsTest, IncludesOverloadedHubs) {
 
     EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).WillOnce(Return(TLoadFactor{99}));
 
-    auto [activeHubs, sortedHubs] = NDetail::CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
 
     ASSERT_EQ(activeHubs.size(), 1);
     EXPECT_TRUE(activeHubs.contains(HUB("hub-overloaded")));

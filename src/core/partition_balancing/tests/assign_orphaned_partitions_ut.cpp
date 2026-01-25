@@ -10,6 +10,7 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 using namespace testing;
+using namespace NDetail;
 using namespace NDomain;
 
 class AssignOrphanedPartitionsTest
@@ -42,16 +43,16 @@ TEST_F(AssignOrphanedPartitionsTest, DistributesLoadBetweenHubs) {
         {"hub-heavy", LF(50)}
     });
 
-    NDetail::TSortedHubs sortedHubs;
+    TSortedHubs sortedHubs;
     sortedHubs.emplace(LF(10), HUB("hub-light"));
     sortedHubs.emplace(LF(50), HUB("hub-heavy"));
 
-    NDetail::TWeightedPartitions orphaned = {
+    TWeightedPartitions orphaned = {
         {PW(100), PID(1)},
         {PW(50),  PID(2)}
     };
 
-    NDetail::TAssignedPartitions assignedPartitions;
+    TAssignedPartitions assignedPartitions;
     
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(100), _))
         .WillOnce(Return(LF(30)));
@@ -59,7 +60,7 @@ TEST_F(AssignOrphanedPartitionsTest, DistributesLoadBetweenHubs) {
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(30), PW(50), _))
         .WillOnce(Return(LF(35)));
 
-    auto migratingWeight = NDetail::AssignOrphanedPartitions(
+    auto migratingWeight = AssignOrphanedPartitions(
         state, orphaned, Predictor_, sortedHubs, assignedPartitions
     );
 
@@ -80,15 +81,15 @@ TEST_F(AssignOrphanedPartitionsTest, DistributesLoadBetweenHubs) {
 TEST_F(AssignOrphanedPartitionsTest, CorrectlyUpdatesPredictorParams) {
     auto state = MakeStateWithHubs({{"hub-one", LF(0)}});
     
-    NDetail::TSortedHubs sortedHubs;
+    TSortedHubs sortedHubs;
     sortedHubs.emplace(LF(0), HUB("hub-one"));
 
-    NDetail::TWeightedPartitions orphaned = {
+    TWeightedPartitions orphaned = {
         {PW(100), PID(1)},
         {PW(200), PID(2)},
     };
 
-    NDetail::TAssignedPartitions assignedPartitions;
+    TAssignedPartitions assignedPartitions;
 
     {
         testing::InSequence s;
@@ -111,7 +112,7 @@ TEST_F(AssignOrphanedPartitionsTest, CorrectlyUpdatesPredictorParams) {
         )).WillOnce(Return(LF(30)));
     }
 
-    auto migratingWeight = NDetail::AssignOrphanedPartitions(
+    auto migratingWeight = AssignOrphanedPartitions(
         state, orphaned, Predictor_, sortedHubs, assignedPartitions
     );
 
@@ -122,14 +123,14 @@ TEST_F(AssignOrphanedPartitionsTest, CorrectlyUpdatesPredictorParams) {
 
 TEST_F(AssignOrphanedPartitionsTest, StopsWhenNoHubsAvailable) {
     auto state = MakeStateWithHubs({});
-    NDetail::TSortedHubs sortedHubs;
+    TSortedHubs sortedHubs;
 
-    NDetail::TWeightedPartitions orphaned = {{PW(100), PID(1)}};
-    NDetail::TAssignedPartitions assignedPartitions;
+    TWeightedPartitions orphaned = {{PW(100), PID(1)}};
+    TAssignedPartitions assignedPartitions;
 
     EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
 
-    auto migratingWeight = NDetail::AssignOrphanedPartitions(
+    auto migratingWeight = AssignOrphanedPartitions(
         state, orphaned, Predictor_, sortedHubs, assignedPartitions
     );
 
@@ -143,15 +144,15 @@ TEST_F(AssignOrphanedPartitionsTest, ConsidersSortOrderAfterUpdate) {
         {"hub-b", LF(15)}
     });
 
-    NDetail::TSortedHubs sortedHubs;
+    TSortedHubs sortedHubs;
     sortedHubs.emplace(LF(10), HUB("hub-a"));
     sortedHubs.emplace(LF(15), HUB("hub-b"));
 
-    NDetail::TWeightedPartitions orphaned = {
+    TWeightedPartitions orphaned = {
         {PW(100), PID(1)},
         {PW(100), PID(2)}
     };
-    NDetail::TAssignedPartitions assignedPartitions;
+    TAssignedPartitions assignedPartitions;
 
     // 1. Hub-A (10) < Hub-B (15).
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(100), _))
@@ -161,7 +162,7 @@ TEST_F(AssignOrphanedPartitionsTest, ConsidersSortOrderAfterUpdate) {
     EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(15), PW(100), _))
         .WillOnce(Return(LF(25)));
 
-    NDetail::AssignOrphanedPartitions(
+    AssignOrphanedPartitions(
         state, orphaned, Predictor_, sortedHubs, assignedPartitions
     );
 

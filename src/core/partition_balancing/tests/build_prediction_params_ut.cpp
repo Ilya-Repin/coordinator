@@ -12,6 +12,7 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 using namespace testing;
+using namespace NDetail;
 using namespace NDomain;
 
 class BuildPredictionParamsTest
@@ -19,7 +20,7 @@ class BuildPredictionParamsTest
 { };
 
 TEST_F(BuildPredictionParamsTest, CorrectlyBuildsParams) {
-    std::set<NDetail::TWeightedPartition> partitions{
+    std::set<TWeightedPartition> partitions{
         {PW(100), PID(1)},
         {PW(237), PID(2)},
         {PW(341), PID(3)},
@@ -32,7 +33,7 @@ TEST_F(BuildPredictionParamsTest, CorrectlyBuildsParams) {
     THubState state;
     state.LoadFactor = LF(35);
 
-    auto params = NDetail::BuildPredictionParams(true, partitions, state);
+    auto params = BuildPredictionParams(true, partitions, state);
 
     EXPECT_EQ(params.Increasing, true);
     EXPECT_EQ(params.TotalPartitions, 8);
@@ -41,11 +42,11 @@ TEST_F(BuildPredictionParamsTest, CorrectlyBuildsParams) {
 }
 
 TEST_F(BuildPredictionParamsTest, HandlesEmptyPartitions) {
-    std::set<NDetail::TWeightedPartition> partitions;
+    std::set<TWeightedPartition> partitions;
     THubState state;
     state.LoadFactor = LF(5);
 
-    auto params = NDetail::BuildPredictionParams(false, partitions, state);
+    auto params = BuildPredictionParams(false, partitions, state);
 
     EXPECT_EQ(params.Increasing, false);
     EXPECT_EQ(params.TotalPartitions, 0);
