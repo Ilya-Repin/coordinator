@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12...3.31)
 project(coordinator CXX)
+set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(DownloadUserver)
@@ -26,11 +27,13 @@ list(REMOVE_ITEM SOURCES ${BENCH_SOURCES} ${LIBUBENCH_SOURCES})
 list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCHMARK_SOURCES} ${LIBUBENCH_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
 include_directories(src)
+file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
+file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_ut.cpp)
+list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCHMARK_SOURCES} ${LIBUBENCH_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
-add_library(
-    ${PROJECT_NAME}_objs OBJECT
-    ${SOURCES}
-)
+
+add_library(${PROJECT_NAME}_objs OBJECT ${SOURCES})
+
 target_link_libraries(
     ${PROJECT_NAME}_objs
     PUBLIC userver::core userver::ydb
@@ -42,14 +45,9 @@ add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 
 # Unit Tests
-add_executable(${PROJECT_NAME}_unittest src/greeting_test.cpp)
+add_executable(${PROJECT_NAME}_unittest ${UNIT_TEST_SOURCES})
 target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)
-
-# Benchmarks
-add_executable(${PROJECT_NAME}_benchmark src/greeting_benchmark.cpp)
-target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${PROJECT_NAME}_objs userver::ubench)
-add_google_benchmark_tests(${PROJECT_NAME}_benchmark)
 
 # Functional testing
 userver_testsuite_add_simple(

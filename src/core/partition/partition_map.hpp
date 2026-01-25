@@ -4,15 +4,17 @@
 #include <core/common/hub_params.hpp>
 #include <core/common/partition_params.hpp>
 
-#include <unordered_map>
+#include <vector>
 
 namespace NCoordinator::NCore::NDomain {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct TCoordinationContext {
-    std::unordered_map<TPartitionId, TEpoch> PartitionCooldowns;
-    std::unordered_map<TPartitionId, TPartitionWeight> PartitionWeights; 
+using TAssignedPartition = std::pair<TPartitionId, THubEndpoint>;
+
+struct TPartitionMap {
+    std::vector<TAssignedPartition> Partitions; // sorted by partition id
+    TEpoch Epoch;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

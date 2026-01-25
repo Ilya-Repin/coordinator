@@ -68,6 +68,7 @@ format:
 # and still able to access the results.
 .PHONY: $(addprefix docker-cmake-, $(PRESETS)) $(addprefix docker-build-, $(PRESETS)) $(addprefix docker-test-, $(PRESETS)) $(addprefix docker-clean-, $(PRESETS))
 $(addprefix docker-cmake-, $(PRESETS)) $(addprefix docker-build-, $(PRESETS)) $(addprefix docker-test-, $(PRESETS)) $(addprefix docker-clean-, $(PRESETS)): docker-%:
+	export USERVER_ENABLE_STACK_USAGE_MONITOR=0
 	docker run $(DOCKER_ARGS) \
 		--network=host \
 		-v $$PWD:$$PWD \
@@ -75,4 +76,5 @@ $(addprefix docker-cmake-, $(PRESETS)) $(addprefix docker-build-, $(PRESETS)) $(
 		$(DOCKER_IMAGE) \
 		env CCACHE_DIR=$$PWD/.ccache \
 		    HOME=$$HOME \
+			USERVER_ENABLE_STACK_USAGE_MONITOR=0 \
 		    $$PWD/run_as_user.sh $(shell /bin/id -u) $(shell /bin/id -g) make $*

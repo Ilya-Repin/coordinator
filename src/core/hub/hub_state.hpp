@@ -1,18 +1,21 @@
 #pragma once
 
-#include <core/common/coordination_params.hpp>
 #include <core/common/hub_params.hpp>
 #include <core/common/partition_params.hpp>
-
-#include <unordered_map>
+#include <core/common/coordination_params.hpp>
 
 namespace NCoordinator::NCore::NDomain {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct TCoordinationContext {
-    std::unordered_map<TPartitionId, TEpoch> PartitionCooldowns;
-    std::unordered_map<TPartitionId, TPartitionWeight> PartitionWeights; 
+struct THubState {
+    THubEndpoint Endpoint;
+    THubDC DC;
+    EHubStatus Status;
+    TLoadFactor LoadFactor;
+    TPartitionWeight ExpectedWeightGrowth;
+    TPartitionWeight PartitionsWeight;
+    std::size_t TotalPartitions{};
 };
 
 ////////////////////////////////////////////////////////////////////////////////

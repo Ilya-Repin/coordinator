@@ -1,18 +1,18 @@
 #pragma once
 
-#include <core/common/coordination_params.hpp>
 #include <core/common/hub_params.hpp>
 #include <core/common/partition_params.hpp>
 
-#include <unordered_map>
+#include <unordered_set>
 
 namespace NCoordinator::NCore::NDomain {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct TCoordinationContext {
-    std::unordered_map<TPartitionId, TEpoch> PartitionCooldowns;
-    std::unordered_map<TPartitionId, TPartitionWeight> PartitionWeights; 
+struct TStateBuildingSettings {
+    std::unordered_set<NDomain::THubDC> BlockedDCs;
+    std::unordered_set<NDomain::THubEndpoint> BlockedHubs;
+    TLoadFactor OverloadThreshold;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
