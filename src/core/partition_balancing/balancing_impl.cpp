@@ -157,6 +157,7 @@ void RebalancePartitions(
         ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, loadFactorPredictor, state, settings);
     }
 
+    assignedPartitions.clear();
     for (auto it = hubPartitions.begin(); it != hubPartitions.end(); ++it) {
         auto& weightedPartitions = it->second;
         const auto& hub = it->first;
