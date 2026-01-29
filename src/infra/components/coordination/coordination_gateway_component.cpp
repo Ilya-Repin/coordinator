@@ -3,8 +3,8 @@
 #include <infra/coordination_gateway/kesus_coordination_gateway.hpp>
 
 #include <userver/components/component.hpp>
-#include <userver/ydb/component.hpp>
 #include <userver/components/component_context.hpp>
+#include <userver/ydb/component.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
 namespace NCoordinator::NInfra::NComponents {
