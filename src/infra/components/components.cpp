@@ -2,6 +2,7 @@
 
 #include <infra/components/coordination/coordination_dist_lock_component.hpp>
 #include <infra/components/coordination/coordination_gateway_component.hpp>
+#include <infra/components/coordination/coordination_repository_component.hpp>
 
 #include <hello.hpp>
 
@@ -21,7 +22,8 @@
 
 namespace NCoordinator::NInfra::NComponents {
 
-void RegisterUserverComponents(userver::components::ComponentList& list) {
+void RegisterUserverComponents(userver::components::ComponentList& list)
+{
     list.Append<userver::server::handlers::Ping>()
         .Append<userver::components::TestsuiteSupport>()
         .AppendComponentList(userver::clients::http::ComponentList())
@@ -31,20 +33,24 @@ void RegisterUserverComponents(userver::components::ComponentList& list) {
 }
 
 // Clients
-void RegisterYdbComponent(userver::components::ComponentList& list) {
+void RegisterYdbComponents(userver::components::ComponentList& list)
+{
     list.Append<userver::components::DefaultSecdistProvider>()
         .Append<userver::components::Secdist>()
         .Append<userver::ydb::YdbComponent>();
 }
 
-// Components
-void RegisterServiceComponents(userver::components::ComponentList& list) {
+// Infra
+void RegisterInfraComponents(userver::components::ComponentList& list)
+{
     list.Append<TCoordinationGatewayComponent>()
+        .Append<TCoordinationRepositoryComponent>()
         .Append<TCoordinationDistLockComponent>();
 }
 
 // Handlers
-void RegisterHandlers(userver::components::ComponentList& list) {
+void RegisterHandlers(userver::components::ComponentList& list)
+{
     list.Append<coordinator::Hello>();
 }
 

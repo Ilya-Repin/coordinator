@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/coordination/coordination_gateway.hpp>
+#include <core/coordination/coordination_repository.hpp>
 
 #include <userver/components/loggable_component_base.hpp>
 
@@ -10,22 +10,22 @@ namespace NCoordinator::NInfra::NComponents {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TCoordinationGatewayComponent
+class TCoordinationRepositoryComponent
     : public userver::components::LoggableComponentBase
 {
 public:
-    static constexpr std::string_view kName = "coordination-gateway";
+    static constexpr std::string_view kName = "coordination-repository";
 
-    TCoordinationGatewayComponent(
+    TCoordinationRepositoryComponent(
         const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context);
 
-    NCore::NDomain::ICoordinationGateway& GetGateway();
+    NCore::NDomain::ICoordinationRepository& GetRepository();
 
     static userver::yaml_config::Schema GetStaticConfigSchema();
 
 private:
-    std::unique_ptr<NCore::NDomain::ICoordinationGateway> Gateway_;
+    std::unique_ptr<NCore::NDomain::ICoordinationRepository> Repository_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

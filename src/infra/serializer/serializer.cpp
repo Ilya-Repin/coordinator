@@ -62,6 +62,38 @@ NCore::NDomain::TPartitionMap DeserializePartitionMap(const userver::formats::js
     return result;
 }
 
+NCore::NDomain::THubReport DeserializeHubReport(const userver::formats::json::Value& jsonValue)
+{
+    NCore::NDomain::THubReport report;
+
+    report.Epoch = NCore::NDomain::TEpoch{
+        std::stoull(jsonValue["epoch"].As<std::string>())
+    };
+    report.Endpoint = NCore::NDomain::THubEndpoint{
+        jsonValue["endpoint"].As<std::string>()
+    };
+    report.DC = NCore::NDomain::THubDC{
+        jsonValue["dc"].As<std::string>()
+    };
+    report.LoadFactor = NCore::NDomain::TLoadFactor{
+        jsonValue["load_factor"].As<std::uint64_t>()
+    };
+
+    const auto& partitionsJson = jsonValue["partitions"];
+    for (auto it = partitionsJson.begin(); it != partitionsJson.end(); ++it) {
+        NCore::NDomain::TPartitionId partitionId{
+            std::stoull(it.GetName())
+        };
+        NCore::NDomain::TPartitionWeight partitionWeight{
+            std::stoull(it->As<std::string>())
+        };
+
+        report.PartitionWeights.emplace(partitionId, partitionWeight);
+    }
+
+    return report;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 } // namespace NCoordinator::NInfra

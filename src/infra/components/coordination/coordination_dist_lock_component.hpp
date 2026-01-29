@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/coordination_gateway.hpp>
+#include <core/coordination/coordination_gateway.hpp>
 
 #include <userver/ydb/dist_lock/component_base.hpp>
 
@@ -23,7 +23,7 @@ public:
     void DoWork() final;
 
 private:
-    NCore::ICoordinationGateway& Gateway_; // Replace with service with core
+    NCore::NDomain::ICoordinationGateway& Gateway_; // Replace with service with core
 };
 
 ////////////////////////////////////////////////////////////////////////////////

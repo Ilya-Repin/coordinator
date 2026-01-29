@@ -1,6 +1,6 @@
 #include "coordination_gateway_component.hpp"
 
-#include <infra/kesus_gateway/kesus_gateway.hpp>
+#include <infra/coordination_gateway/kesus_coordination_gateway.hpp>
 
 #include <userver/components/component.hpp>
 #include <userver/ydb/component.hpp>
@@ -18,19 +18,21 @@ TCoordinationGatewayComponent::TCoordinationGatewayComponent(
 {
     auto dbname = config["dbname"].As<std::string>();
     auto coordinationNode = config["coordination-node"].As<std::string>();
-    auto semaphoreName = config["semaphore-name"].As<std::string>();
+    auto partitionMapSemaphore = config["partition-map-semaphore"].As<std::string>();
+    auto discoverySemaphore = config["discovery-semaphore"].As<std::string>();
     auto initialSetup = config["initial-setup"].As<bool>(true);
 
     auto coordinationClient = context.FindComponent<userver::ydb::YdbComponent>().GetCoordinationClient(dbname);
 
-    Gateway_ = std::make_unique<NInfra::NGateway::TKesusGateway>(
+    Gateway_ = std::make_unique<NInfra::NGateway::TKesusCoordinationGateway>(
         std::move(coordinationClient),
         coordinationNode,
-        semaphoreName,
+        partitionMapSemaphore,
+        discoverySemaphore,
         initialSetup);
 }
 
-NCore::ICoordinationGateway& TCoordinationGatewayComponent::GetGateway()
+NCore::NDomain::ICoordinationGateway& TCoordinationGatewayComponent::GetGateway()
 {
     return *Gateway_;
 }
@@ -49,9 +51,12 @@ properties:
     coordination-node:
         type: string
         description: name of the coordination node within the database
-    semaphore-name:
+    partition-map-semaphore:
         type: string
-        description: name of the semaphore within the coordination node
+        description: name of the partition map semaphore within the coordination node
+    discovery-semaphore:
+        type: string
+        description: name of the discovery semaphore within the coordination node
     initial-setup:
         type: boolean
         description: if true, then create the coordination node and the semaphore

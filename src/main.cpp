@@ -16,9 +16,9 @@ int main(int argc, char* argv[]) {
     auto component_list = userver::components::MinimalServerComponentList();
 
     NCoordinator::NInfra::NComponents::RegisterUserverComponents(component_list);
-    NCoordinator::NInfra::NComponents::RegisterYdbComponent(component_list);
+    NCoordinator::NInfra::NComponents::RegisterYdbComponents(component_list);
 
-    NCoordinator::NInfra::NComponents::RegisterServiceComponents(component_list);
+    NCoordinator::NInfra::NComponents::RegisterInfraComponents(component_list);
     NCoordinator::NInfra::NComponents::RegisterHandlers(component_list);
 
     return userver::utils::DaemonMain(argc, argv, component_list);

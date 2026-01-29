@@ -37,11 +37,9 @@ TCoordinationDistLockComponent::~TCoordinationDistLockComponent()
 }
 
 void TCoordinationDistLockComponent::DoWork() {
-    LOG_CRITICAL() << "DO WORK 1";
-
     while (!userver::engine::current_task::ShouldCancel()) {
-        LOG_CRITICAL() << "DO WORK 2";
-        auto partitionMap = Gateway_.GetPartitionMap();
+        auto partitionMap = Gateway_.GetPartitionMap().value_or(NCore::NDomain::TPartitionMap{});
+        
         ++(partitionMap.Epoch.GetUnderlying());
         Gateway_.BroadcastPartitionMap(partitionMap);
 

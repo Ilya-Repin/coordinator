@@ -1,28 +1,33 @@
 #pragma once
 
-#include <core/coordination_gateway.hpp>
+#include <core/common/hub_params.hpp>
+#include <core/coordination/coordination_gateway.hpp>
 #include <core/partition/partition_map.hpp>
 
 #include <userver/ydb/coordination.hpp>
 
 #include <memory>
+#include <vector>
 
 namespace NCoordinator::NInfra::NGateway {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TKesusGateway
-    : public NCore::ICoordinationGateway 
+class TKesusCoordinationGateway
+    : public NCore::NDomain::ICoordinationGateway 
 {
 public:
-    TKesusGateway(
+    TKesusCoordinationGateway(
         std::shared_ptr<userver::ydb::CoordinationClient> coordinationClient,
         const std::string& coordinationNode,
-        const std::string& semaphoreName,
+        const std::string& partitionMapSemaphore,
+        const std::string& discoverySemaphore,
         const bool initialSetup);
 
-    NCore::NDomain::TPartitionMap GetPartitionMap() const override;
+    std::optional<NCore::NDomain::TPartitionMap> GetPartitionMap() const override;
     void BroadcastPartitionMap(const NCore::NDomain::TPartitionMap& partitionMap) const override;
+
+    std::vector<NCore::NDomain::THubEndpoint> GetHubDiscovery() const override;
 
 private:
     void InitialSetup(
@@ -30,7 +35,8 @@ private:
         const std::string& coordinationNode) const;
 
 private:
-    const std::string SemaphoreName_;
+    const std::string PartitionMapSemaphore_;
+    const std::string DiscoverySemaphore_;
     std::unique_ptr<userver::ydb::CoordinationSession> CoordinationSession_;
 };
 

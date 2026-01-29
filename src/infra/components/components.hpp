@@ -9,10 +9,10 @@ namespace NCoordinator::NInfra::NComponents {
 void RegisterUserverComponents(userver::components::ComponentList&);
 
 // Clients
-void RegisterYdbComponent(userver::components::ComponentList&);
+void RegisterYdbComponents(userver::components::ComponentList&);
 
-// Components
-void RegisterServiceComponents(userver::components::ComponentList&);
+// Infra
+void RegisterInfraComponents(userver::components::ComponentList&);
 
 // Handlers
 void RegisterHandlers(userver::components::ComponentList& list);

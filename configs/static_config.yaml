@@ -63,10 +63,14 @@ components_manager:
                     max_pool_size: 10
                     min_pool_size: 5
 
+        coordination-repository:
+            dbname: chat_db
+
         coordination-gateway:
             dbname: chat_db
             coordination-node: chat-coordination
-            semaphore-name: partition-map-lock
+            partition-map-semaphore: partition-map-lock
+            discovery-semaphore: discovery-lock
             initial-setup: true
 
         coordination-dist-lock:

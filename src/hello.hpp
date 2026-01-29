@@ -1,14 +1,14 @@
 #pragma once
 
-#include <core/coordination_gateway.hpp>
+#include <core/coordination/coordination_gateway.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/server/handlers/http_handler_json_base.hpp>
 #include <userver/ydb/coordination.hpp>
 #include <infra/components/coordination/coordination_dist_lock_component.hpp>
+#include <infra/coordination_gateway/kesus_coordination_gateway.hpp>
 
 #include <userver/ydb/component.hpp>
 #include <memory>
-#include <infra/kesus_gateway/kesus_gateway.hpp>
 
 
 namespace coordinator {
@@ -28,8 +28,7 @@ public:
 private:
     NYdb::NCoordination::TSessionSettings settings;
     std::shared_ptr<userver::ydb::CoordinationClient> ydb_client_;
-    std::unique_ptr<NCoordinator::NCore::ICoordinationGateway> gateway;
-    NCoordinator::NInfra::NComponents::TCoordinationDistLockComponent& dist_;
+    std::unique_ptr<NCoordinator::NCore::NDomain::ICoordinationGateway> gateway;
 };
 
 }  // namespace coordinator

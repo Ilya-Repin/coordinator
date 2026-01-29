@@ -7,7 +7,8 @@ include(DownloadUserver)
 
 find_package(
     userver
-    COMPONENTS core #
+    COMPONENTS
+    core
     QUIET
 )
 if(NOT userver_FOUND)
@@ -33,7 +34,7 @@ list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCHMARK_SOURCES} ${LIBUBENCH_S
 
 
 add_library(${PROJECT_NAME}_objs OBJECT ${SOURCES})
-
+include_directories(src)
 target_link_libraries(
     ${PROJECT_NAME}_objs
     PUBLIC userver::core userver::ydb
