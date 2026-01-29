@@ -7,7 +7,8 @@ include(DownloadUserver)
 
 find_package(
     userver
-    COMPONENTS core #
+    COMPONENTS
+    core
     QUIET
 )
 if(NOT userver_FOUND)
@@ -18,6 +19,14 @@ endif()
 userver_setup_environment()
 
 # Common sources
+
+file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
+file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp)
+file(GLOB_RECURSE BENCHMARK_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_benchmark.cpp)
+file(GLOB_RECURSE LIBUBENCH_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/benchmarks_main.cpp)
+list(REMOVE_ITEM SOURCES ${BENCH_SOURCES} ${LIBUBENCH_SOURCES})
+list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCHMARK_SOURCES} ${LIBUBENCH_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
 include_directories(src)
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp)
 file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_ut.cpp)
@@ -25,10 +34,10 @@ list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCHMARK_SOURCES} ${LIBUBENCH_S
 
 
 add_library(${PROJECT_NAME}_objs OBJECT ${SOURCES})
-
+include_directories(src)
 target_link_libraries(
     ${PROJECT_NAME}_objs
-    PUBLIC userver::core #
+    PUBLIC userver::core userver::ydb
 )
 
 
@@ -42,7 +51,9 @@ target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs user
 add_google_tests(${PROJECT_NAME}_unittest)
 
 # Functional testing
-userver_testsuite_add_simple()
+userver_testsuite_add_simple(
+    REQUIREMENTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/requirements.txt
+)
 
 # Install
 include(GNUInstallDirs)

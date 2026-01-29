@@ -36,6 +36,8 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
+        "USERVER_FEATURE_GRPC": "ON", 
+        "USERVER_FEATURE_YDB": "ON", 
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     }

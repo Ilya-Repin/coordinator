@@ -1,3 +1,5 @@
+#include <infra/components/components.hpp>
+
 #include <userver/clients/dns/component.hpp>
 #include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
@@ -8,22 +10,16 @@
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 
-
 #include <userver/utils/daemon_run.hpp>
 
-#include <hello.hpp>
-
 int main(int argc, char* argv[]) {
-    auto component_list =
-        userver::components::MinimalServerComponentList()
-            .Append<userver::server::handlers::Ping>()
-            .Append<userver::components::TestsuiteSupport>()
-            .AppendComponentList(userver::clients::http::ComponentList())
-            .Append<userver::clients::dns::Component>()
-            .Append<userver::server::handlers::TestsControl>()
-            .Append<userver::congestion_control::Component>()
-            .Append<coordinator::Hello>()
-        ;
+    auto component_list = userver::components::MinimalServerComponentList();
+
+    NCoordinator::NInfra::NComponents::RegisterUserverComponents(component_list);
+    NCoordinator::NInfra::NComponents::RegisterYdbComponents(component_list);
+
+    NCoordinator::NInfra::NComponents::RegisterInfraComponents(component_list);
+    NCoordinator::NInfra::NComponents::RegisterHandlers(component_list);
 
     return userver::utils::DaemonMain(argc, argv, component_list);
 }
