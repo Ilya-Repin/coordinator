@@ -28,13 +28,15 @@ protected:
     TEpoch EP(TEpoch::UnderlyingType epoch) const;
     TPartitionId PID(TPartitionId::UnderlyingType partitionId) const;
     TPartitionWeight PW(TPartitionWeight::UnderlyingType partitionWeight) const;
+    std::unordered_map<TPartitionId, TPartitionWeight> PWS(
+        std::initializer_list<std::pair<const TPartitionId, TPartitionWeight>> list) const;
 
     THubEndpoint HUB(THubEndpoint::UnderlyingType hub) const;
     THubDC DC(THubDC::UnderlyingType dc) const;
     TLoadFactor LF(TLoadFactor::UnderlyingType lf) const;
 
 protected:
-    std::shared_ptr<TMockLoadFactorPredictor> Predictor_;
+    std::unique_ptr<TMockLoadFactorPredictor> Predictor_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

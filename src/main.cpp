@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
     NCoordinator::NInfra::NComponents::RegisterYdbComponents(component_list);
 
     NCoordinator::NInfra::NComponents::RegisterInfraComponents(component_list);
+    NCoordinator::NInfra::NComponents::RegisterServices(component_list);
     NCoordinator::NInfra::NComponents::RegisterHandlers(component_list);
 
     return userver::utils::DaemonMain(argc, argv, component_list);

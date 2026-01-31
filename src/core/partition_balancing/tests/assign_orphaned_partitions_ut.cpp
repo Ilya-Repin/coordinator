@@ -21,9 +21,7 @@ protected:
     {
         TCoordinationState::TClusterSnapshot snapshot;
         for (const auto& [name, load] : hubsInfo) {
-            snapshot.emplace(HUB(name), THubReport{
-                EP(42), HUB(name), DC("myt"), load, {}
-            });
+            snapshot.emplace_back(EP(42), HUB(name), DC("myt"), load, PWS({}));
         }
 
         TPartitionMap map{
@@ -54,14 +52,28 @@ TEST_F(AssignOrphanedPartitionsTest, DistributesLoadBetweenHubs) {
 
     TAssignedPartitions assignedPartitions;
     
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(100), _))
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(10)),
+            Field(&TPredictionParams::PartitionWeight, PW(100)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(10)))))
         .WillOnce(Return(LF(30)));
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(30), PW(50), _))
+    EXPECT_CALL(*Predictor_, 
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(30)),
+            Field(&TPredictionParams::PartitionWeight, PW(50)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 1),
+            Field(&TPredictionParams::PartitionsWeight, PW(100)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(10)))))
         .WillOnce(Return(LF(35)));
 
     auto migratingWeight = AssignOrphanedPartitions(
-        state, orphaned, Predictor_, sortedHubs, assignedPartitions
+        state, orphaned, *Predictor_, sortedHubs, assignedPartitions
     );
 
     ASSERT_EQ(assignedPartitions.size(), 2);
@@ -95,25 +107,30 @@ TEST_F(AssignOrphanedPartitionsTest, CorrectlyUpdatesPredictorParams) {
         testing::InSequence s;
 
         // Params: Total=0, Weight=0 
-        EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(0), PW(100), 
-            AllOf(
-                Field(&TPredictionParams::TotalPartitions, 0),
-                Field(&TPredictionParams::PartitionsWeight, PW(0))
-            )
-        )).WillOnce(Return(LF(10)));
-
+        EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(0)),
+            Field(&TPredictionParams::PartitionWeight, PW(100)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(0)))))
+        .WillOnce(Return(LF(10)));
 
         // Params: Total=1, Weight=100
-        EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(200), 
-            AllOf(
+        EXPECT_CALL(*Predictor_, 
+            PredictLoadFactor(AllOf(
+                Field(&TPredictionParams::LoadFactor, LF(10)),
+                Field(&TPredictionParams::PartitionWeight, PW(200)),
+                Field(&TPredictionParams::Increasing, true),
                 Field(&TPredictionParams::TotalPartitions, 1),
-                Field(&TPredictionParams::PartitionsWeight, PW(100))
-            )
-        )).WillOnce(Return(LF(30)));
+                Field(&TPredictionParams::PartitionsWeight, PW(100)),
+                Field(&TPredictionParams::OriginalLoadFactor, LF(0)))))
+            .WillOnce(Return(LF(30)));
     }
 
     auto migratingWeight = AssignOrphanedPartitions(
-        state, orphaned, Predictor_, sortedHubs, assignedPartitions
+        state, orphaned, *Predictor_, sortedHubs, assignedPartitions
     );
 
     ASSERT_EQ(migratingWeight.size(), 1);
@@ -128,10 +145,10 @@ TEST_F(AssignOrphanedPartitionsTest, StopsWhenNoHubsAvailable) {
     TWeightedPartitions orphaned = {{PW(100), PID(1)}};
     TAssignedPartitions assignedPartitions;
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).Times(0);
 
     auto migratingWeight = AssignOrphanedPartitions(
-        state, orphaned, Predictor_, sortedHubs, assignedPartitions
+        state, orphaned, *Predictor_, sortedHubs, assignedPartitions
     );
 
     EXPECT_TRUE(assignedPartitions.empty());
@@ -155,15 +172,29 @@ TEST_F(AssignOrphanedPartitionsTest, ConsidersSortOrderAfterUpdate) {
     TAssignedPartitions assignedPartitions;
 
     // 1. Hub-A (10) < Hub-B (15).
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(100), _))
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(10)),
+            Field(&TPredictionParams::PartitionWeight, PW(100)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(10)))))
         .WillOnce(Return(LF(20)));
 
     // 2. sortedHubs: Hub-B (15), Hub-A (20)
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(15), PW(100), _))
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(15)),
+            Field(&TPredictionParams::PartitionWeight, PW(100)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(15)))))
         .WillOnce(Return(LF(25)));
 
     AssignOrphanedPartitions(
-        state, orphaned, Predictor_, sortedHubs, assignedPartitions
+        state, orphaned, *Predictor_, sortedHubs, assignedPartitions
     );
 
     ASSERT_EQ(assignedPartitions.size(), 2);

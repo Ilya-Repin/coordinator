@@ -20,8 +20,8 @@ class RebalancePartitionsTest
 
 TEST_F(RebalancePartitionsTest, DoesNothingWhenCVBelowThreshold) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-1"), THubReport{EP(100), HUB("hub-1"), DC("myt"), LF(50), {}});
-    snapshot.emplace(HUB("hub-2"), THubReport{EP(100), HUB("hub-2"), DC("myt"), LF(52), {}});
+    snapshot.emplace_back(EP(100), HUB("hub-1"), DC("myt"), LF(50), PWS({}));
+    snapshot.emplace_back(EP(100), HUB("hub-2"), DC("myt"), LF(52), PWS({}));
 
     TPartitionMap map{
         .Partitions{},
@@ -43,13 +43,13 @@ TEST_F(RebalancePartitionsTest, DoesNothingWhenCVBelowThreshold) {
     TBalancingSettings settings;
     settings.BalancingThresholdCV = 1.0;
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).Times(0);
 
     RebalancePartitions(
         sortedHubs,
         assignedPartitions,
         migrationContext,
-        Predictor_,
+        *Predictor_,
         state,
         settings);
 
@@ -59,12 +59,8 @@ TEST_F(RebalancePartitionsTest, DoesNothingWhenCVBelowThreshold) {
 
 TEST_F(RebalancePartitionsTest, PerformsSingleRebalancingPhase) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-max"), THubReport{
-        EP(100), HUB("hub-max"), DC("myt"), LF(90), {{PID(1), PW(20)}}
-    });
-    snapshot.emplace(HUB("hub-min"), THubReport{
-        EP(100), HUB("hub-min"), DC("myt"), LF(10), {}
-    });
+    snapshot.emplace_back(EP(100), HUB("hub-max"), DC("myt"), LF(90), PWS({{PID(1), PW(20)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-min"), DC("myt"), LF(10), PWS({}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-max")}},
@@ -95,17 +91,31 @@ TEST_F(RebalancePartitionsTest, PerformsSingleRebalancingPhase) {
     settings.MigratingWeightLimit = PW(1000);
     settings.MaxRebalancePhases = 1;
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(90), PW(20), _))
-        .WillRepeatedly(Return(LF(70)));
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(90)),
+            Field(&TPredictionParams::PartitionWeight, PW(20)),
+            Field(&TPredictionParams::Increasing, false),
+            Field(&TPredictionParams::TotalPartitions, 1),
+            Field(&TPredictionParams::PartitionsWeight, PW(20)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(90)))))
+        .WillOnce(Return(LF(70)));
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(20), _))
-        .WillRepeatedly(Return(LF(30)));
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(10)),
+            Field(&TPredictionParams::PartitionWeight, PW(20)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(10)))))
+        .WillOnce(Return(LF(30)));
 
     RebalancePartitions(
         sortedHubs,
         assignedPartitions,
         migrationContext,
-        Predictor_,
+        *Predictor_,
         state,
         settings);
 
@@ -119,12 +129,8 @@ TEST_F(RebalancePartitionsTest, PerformsSingleRebalancingPhase) {
 
 TEST_F(RebalancePartitionsTest, StopsWhenMigrationBudgetExceeded) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-max"), THubReport{
-        EP(100), HUB("hub-max"), DC("myt"), LF(90), {{PID(1), PW(50)}}
-    });
-    snapshot.emplace(HUB("hub-min"), THubReport{
-        EP(100), HUB("hub-min"), DC("myt"), LF(10), {}
-    });
+    snapshot.emplace_back(EP(100), HUB("hub-max"), DC("myt"), LF(90), PWS({{PID(1), PW(50)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-min"), DC("myt"), LF(10), PWS({}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-max")}},
@@ -156,13 +162,13 @@ TEST_F(RebalancePartitionsTest, StopsWhenMigrationBudgetExceeded) {
     settings.MigratingWeightLimit = PW(50);
     settings.MaxRebalancePhases = 10;
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).Times(0);
 
     RebalancePartitions(
         sortedHubs,
         assignedPartitions,
         migrationContext,
-        Predictor_,
+        *Predictor_,
         state,
         settings);
 
@@ -171,8 +177,8 @@ TEST_F(RebalancePartitionsTest, StopsWhenMigrationBudgetExceeded) {
 
 TEST_F(RebalancePartitionsTest, RespectsMaxRebalancePhases) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-1"), THubReport{EP(100), HUB("hub-1"), DC("myt"), LF(80), {{PID(1), PW(10)}}});
-    snapshot.emplace(HUB("hub-2"), THubReport{EP(100), HUB("hub-2"), DC("myt"), LF(20), {}});
+    snapshot.emplace_back(EP(100), HUB("hub-1"), DC("myt"), LF(80), PWS({{PID(1), PW(10)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-2"), DC("myt"), LF(20), PWS({}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-1")}},
@@ -201,13 +207,13 @@ TEST_F(RebalancePartitionsTest, RespectsMaxRebalancePhases) {
     settings.BalancingTargetCV = 0.0;
     settings.MaxRebalancePhases = 0;
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).Times(0);
 
     RebalancePartitions(
         sortedHubs,
         assignedPartitions,
         migrationContext,
-        Predictor_,
+        *Predictor_,
         state,
         settings);
 

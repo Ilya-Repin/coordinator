@@ -1,8 +1,11 @@
 #include "components.hpp"
 
-#include <infra/components/coordination/coordination_dist_lock_component.hpp>
+#include <infra/components/leader/leader_service_component.hpp>
+#include <infra/components/leader/leader_dist_lock_component.hpp>
 #include <infra/components/coordination/coordination_gateway_component.hpp>
 #include <infra/components/coordination/coordination_repository_component.hpp>
+#include <infra/components/hub/hub_gateway_component.hpp>
+#include <infra/components/partition_balancing/load_factor_predictor_component.hpp>
 
 #include <hello.hpp>
 
@@ -45,7 +48,15 @@ void RegisterInfraComponents(userver::components::ComponentList& list)
 {
     list.Append<TCoordinationGatewayComponent>()
         .Append<TCoordinationRepositoryComponent>()
-        .Append<TCoordinationDistLockComponent>();
+        .Append<THubGatewayComponent>()
+        .Append<TLeaderDistLockComponent>()
+        .Append<TLoadFactorPredictorComponent>();
+}
+
+// Services
+void RegisterServices(userver::components::ComponentList& list)
+{
+    list.Append<TLeaderServiceComponent>();
 }
 
 // Handlers

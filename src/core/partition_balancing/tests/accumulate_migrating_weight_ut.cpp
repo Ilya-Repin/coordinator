@@ -1,7 +1,6 @@
 #include <core/partition_balancing/balancing_impl.hpp>
 
 #include "test_helpers_ut.hpp"
-#include "load_factor_predictor_mock.hpp"
 
 #include <gtest/gtest.h>
 

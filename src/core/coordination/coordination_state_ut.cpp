@@ -124,8 +124,7 @@ TEST(TCoordinationState, CalculateAveragePartitionWeightFromContext)
 TEST(TCoordinationState, CalculatesAveragePartitionWeightFromSnapshot)
 {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
+    snapshot.emplace_back(
         MakeHubReport(
             "hub-a",
             "myt",
@@ -154,8 +153,7 @@ TEST(TCoordinationState, HandlesEmptySnapshot) {
 TEST(TCoordinationState, BuildsHubStatesFromSnapshot)
 {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
+    snapshot.emplace_back(
         MakeHubReport(
             "hub-a",
             "myt",
@@ -185,8 +183,7 @@ TEST(TCoordinationState, BuildsHubStatesFromSnapshot)
 TEST(TCoordinationState, ComputesExpectedWeightGrowth)
 {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
+    snapshot.emplace_back(
         MakeHubReport(
             "hub-a",
             "myt",
@@ -216,9 +213,7 @@ TEST(TCoordinationState, HubStatusDrainingBySettings)
     settings.BlockedHubs.insert(THubEndpoint("hub-a"));
 
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
-        MakeHubReport("hub-a", "myt", 42, 10, {}));
+    snapshot.emplace_back(MakeHubReport("hub-a", "myt", 42, 10, {}));
 
     TCoordinationState state(
         MakePartitionMap(),
@@ -234,9 +229,7 @@ TEST(TCoordinationState, HubStatusDrainingBySettings)
 TEST(TCoordinationState, HubStatusLagged)
 {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
-        MakeHubReport("hub-a", "myt", 41, 10, {}));
+    snapshot.emplace_back(MakeHubReport("hub-a", "myt", 41, 10, {}));
 
     TCoordinationState state(
         MakePartitionMap(),
@@ -252,9 +245,7 @@ TEST(TCoordinationState, HubStatusLagged)
 TEST(TCoordinationState, HubStatusOverloaded)
 {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
-        MakeHubReport("hub-a", "myt", 42, 95, {}));
+    snapshot.emplace_back(MakeHubReport("hub-a", "myt", 42, 95, {}));
 
     TCoordinationState state(
         MakePartitionMap(),
@@ -273,9 +264,7 @@ TEST(TCoordinationState, HubStatusDrainingPriority)
     settings.BlockedHubs.insert(THubEndpoint("hub-a"));
 
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
-        MakeHubReport("hub-a", "myt", 42, 95, {}));
+    snapshot.emplace_back(MakeHubReport("hub-a", "myt", 42, 95, {}));
 
     TCoordinationState state(
         MakePartitionMap(),
@@ -294,15 +283,9 @@ TEST(TCoordinationState, DrainingHubsByBlockedDC)
     settings.BlockedDCs.insert(THubDC("myt"));
 
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(
-        THubEndpoint("hub-a"),
-        MakeHubReport("hub-a", "myt", 42, 10, {}));
-    snapshot.emplace(
-        THubEndpoint("hub-b"),
-        MakeHubReport("hub-b", "myt", 42, 35, {}));
-    snapshot.emplace(
-        THubEndpoint("hub-c"),
-        MakeHubReport("hub-c", "sas", 42, 24, {}));
+    snapshot.emplace_back(MakeHubReport("hub-a", "myt", 42, 10, {}));
+    snapshot.emplace_back(MakeHubReport("hub-b", "myt", 42, 35, {}));
+    snapshot.emplace_back(MakeHubReport("hub-c", "sas", 42, 24, {}));
 
     TCoordinationState state(
         MakePartitionMap(),

@@ -33,8 +33,10 @@ TEST_F(BuildPredictionParamsTest, CorrectlyBuildsParams) {
     THubState state;
     state.LoadFactor = LF(35);
 
-    auto params = BuildPredictionParams(true, partitions, state);
-
+    auto params = BuildPredictionParams(LF(15), PW(101), true, partitions, state);
+    
+    EXPECT_EQ(params.LoadFactor, LF(15));
+    EXPECT_EQ(params.PartitionWeight, PW(101));
     EXPECT_EQ(params.Increasing, true);
     EXPECT_EQ(params.TotalPartitions, 8);
     EXPECT_EQ(params.PartitionsWeight, PW(3082));
@@ -46,8 +48,10 @@ TEST_F(BuildPredictionParamsTest, HandlesEmptyPartitions) {
     THubState state;
     state.LoadFactor = LF(5);
 
-    auto params = BuildPredictionParams(false, partitions, state);
+    auto params = BuildPredictionParams(LF(5), PW(3), false, partitions, state);
 
+    EXPECT_EQ(params.LoadFactor, LF(5));
+    EXPECT_EQ(params.PartitionWeight, PW(3));
     EXPECT_EQ(params.Increasing, false);
     EXPECT_EQ(params.TotalPartitions, 0);
     EXPECT_EQ(params.PartitionsWeight, PW(0));

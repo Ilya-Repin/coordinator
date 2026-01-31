@@ -113,6 +113,7 @@ void TKesusCoordinationGateway::InitialSetup(
             PartitionMapSemaphore_,
             PARTITION_MAP_SEMAPHORE_LIMIT);
             // std::string{DEFAULT_PARTITION_MAP_DATA});
+        session.UpdateSemaphore(PartitionMapSemaphore_, std::string{DEFAULT_PARTITION_MAP_DATA});
     } catch (const userver::ydb::YdbResponseError& ex) {
         LOG_WARNING() << "Could not create partition map semaphore: " << ex;
     }

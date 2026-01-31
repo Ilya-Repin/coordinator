@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/coordination/coordination_gateway.hpp>
+#include <app/services/leader/leader_service.hpp>
 
 #include <userver/ydb/dist_lock/component_base.hpp>
 
@@ -8,22 +8,22 @@ namespace NCoordinator::NInfra::NComponents {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TCoordinationDistLockComponent
+class TLeaderDistLockComponent
     : public userver::ydb::DistLockComponentBase
 {
 public:
-    static constexpr std::string_view kName = "coordination-dist-lock";
+    static constexpr std::string_view kName = "leader-dist-lock";
 
-    TCoordinationDistLockComponent(
+    TLeaderDistLockComponent(
         const userver::components::ComponentConfig& config,
         const userver::components::ComponentContext& context);
     
-    ~TCoordinationDistLockComponent();
+    ~TLeaderDistLockComponent();
 
     void DoWork() final;
 
 private:
-    NCore::NDomain::ICoordinationGateway& Gateway_; // Replace with service with core
+    NApp::NService::TLeaderService& Service_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -14,6 +14,9 @@ void RegisterYdbComponents(userver::components::ComponentList&);
 // Infra
 void RegisterInfraComponents(userver::components::ComponentList&);
 
+// Services
+void RegisterServices(userver::components::ComponentList&);
+
 // Handlers
 void RegisterHandlers(userver::components::ComponentList& list);
 

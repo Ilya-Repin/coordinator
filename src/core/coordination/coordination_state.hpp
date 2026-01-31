@@ -19,7 +19,7 @@ namespace NCoordinator::NCore::NDomain {
 
 class TCoordinationState {
 public:
-    using TClusterSnapshot = std::unordered_map<THubEndpoint, THubReport>;
+    using TClusterSnapshot = std::vector<THubReport>;
     using TPartitionStates = std::unordered_map<TPartitionId, TPartitionState>;
     using THubStates = std::unordered_map<THubEndpoint, THubState>;
 

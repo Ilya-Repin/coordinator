@@ -20,15 +20,15 @@ class BuildCoordinationContextTest
 TEST_F(BuildCoordinationContextTest, BuildsCoordinationContext) {
     TCoordinationState::TClusterSnapshot snapshot;
     {
-        snapshot.emplace(HUB("hub-active"), THubReport{
-            EP(42), HUB("hub-active"), DC("myt"), LF(10), {
+        snapshot.emplace_back(
+            EP(42), HUB("hub-active"), DC("myt"), LF(10), PWS({
                 {PID(1), PW(50)},
-        }});
+            }));
 
-        snapshot.emplace(HUB("hub-draining"), THubReport{
-            EP(42), HUB("hub-draining"), DC("myt"), LF(10), {
+        snapshot.emplace_back(
+            EP(42), HUB("hub-draining"), DC("myt"), LF(10), PWS({
                 {PID(2), PW(220)},
-            }});
+            }));
     }
 
     TPartitionMap map{
@@ -80,11 +80,11 @@ TEST_F(BuildCoordinationContextTest, BuildsCoordinationContext) {
 TEST_F(BuildCoordinationContextTest, UsesAverageWeightIfObservedMissing) {
     TCoordinationState::TClusterSnapshot snapshot;
     {
-        snapshot.emplace(HUB("hub-1"), THubReport{
-            EP(10), HUB("hub-1"), DC("myt"), LF(50), {
+        snapshot.emplace_back(
+            EP(10), HUB("hub-1"), DC("myt"), LF(50), PWS({
                 {PID(1), PW(100)},
                 {PID(2), PW(200)},
-            }});
+            }));
     }
 
     TPartitionMap map{
@@ -129,7 +129,7 @@ TEST_F(BuildCoordinationContextTest, FiltersOutdatedCooldowns) {
     };
 
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("h"), THubReport{EP(100), HUB("h"), DC("dc"), LF(0), {}});
+    snapshot.emplace_back(EP(100), HUB("h"), DC("dc"), LF(0), PWS({}));
 
     TCoordinationContext context{
         .PartitionCooldowns{
@@ -154,9 +154,7 @@ TEST_F(BuildCoordinationContextTest, FiltersOutdatedCooldowns) {
 
 TEST_F(BuildCoordinationContextTest, MigrationOverwritesExistingCooldown) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("h"), THubReport{
-        EP(10), HUB("h"), DC("dc"), LF(0), {{PID(1), PW(100)}}
-    });
+    snapshot.emplace_back(EP(10), HUB("h"), DC("dc"), LF(0), PWS({{PID(1), PW(100)}}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("h")}},
@@ -187,11 +185,10 @@ TEST_F(BuildCoordinationContextTest, MigrationOverwritesExistingCooldown) {
 
 TEST_F(BuildCoordinationContextTest, UpdatesObservedWeightsInContext) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("h"), THubReport{
-        EP(10), HUB("h"), DC("dc"), LF(0), {
+    snapshot.emplace_back(
+        EP(10), HUB("h"), DC("dc"), LF(0), PWS({
             {PID(1), PW(500)},
-        }
-    });
+        }));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("h")}},
@@ -216,9 +213,7 @@ TEST_F(BuildCoordinationContextTest, UpdatesObservedWeightsInContext) {
 
 TEST_F(BuildCoordinationContextTest, HandlesExpectedWeightGrowth) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("h"), THubReport{
-        EP(10), HUB("h"), DC("dc"), LF(0), {{PID(1), PW(100)}}
-    });
+    snapshot.emplace_back(EP(10), HUB("h"), DC("dc"), LF(0), PWS({{PID(1), PW(100)}}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("h")}},

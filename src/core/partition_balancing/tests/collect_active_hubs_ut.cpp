@@ -20,23 +20,23 @@ class CollectActiveHubsTest
 TEST_F(CollectActiveHubsTest, FiltersDrainingLaggedOfflineHubs) {
     TCoordinationState::TClusterSnapshot snapshot;
     {
-        snapshot.emplace(HUB("hub-active"), THubReport{
-            EP(42), HUB("hub-active"), DC("myt"), LF(10), {
+        snapshot.emplace_back(
+            EP(42), HUB("hub-active"), DC("myt"), LF(10), PWS({
                 {PID(1), PW(50)},
                 {PID(7), PW(320)},
-        }});
+            }));
 
-        snapshot.emplace(HUB("hub-draining"), THubReport{
-            EP(42), HUB("hub-draining"), DC("myt"), LF(10), {
+        snapshot.emplace_back(
+            EP(42), HUB("hub-draining"), DC("myt"), LF(10), PWS({
                 {PID(2), PW(200)},
                 {PID(3), PW(410)},
-            }});
+            }));
 
-        snapshot.emplace(HUB("hub-lagged"), THubReport{
-            EP(41), HUB("hub-lagged"), DC("myt"), LF(10), {
+        snapshot.emplace_back(
+            EP(41), HUB("hub-lagged"), DC("myt"), LF(10), PWS({
                 {PID(5), PW(309)},
                 {PID(6), PW(200)},
-            }});
+            }));
     }
 
     TPartitionMap map{
@@ -67,10 +67,10 @@ TEST_F(CollectActiveHubsTest, FiltersDrainingLaggedOfflineHubs) {
 
     TCoordinationState state(map, snapshot, context, settings);
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _))
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_))
         .WillOnce(Return(TLoadFactor{15}));
 
-    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, *Predictor_);
 
     EXPECT_EQ(activeHubs.size(), 1);
     EXPECT_TRUE(activeHubs.contains(HUB("hub-active")));
@@ -80,16 +80,16 @@ TEST_F(CollectActiveHubsTest, FiltersDrainingLaggedOfflineHubs) {
 TEST_F(CollectActiveHubsTest, SortsHubsByForecastedLoad) {
     TCoordinationState::TClusterSnapshot snapshot;
     {
-        snapshot.emplace(HUB("hub-heavy"), THubReport{
-            EP(42), HUB("hub-heavy"), DC("myt"), LF(80), {
+        snapshot.emplace_back(
+            EP(42), HUB("hub-heavy"), DC("myt"), LF(80), PWS({
                 {PID(1), PW(150)},
                 {PID(3), PW(220)},
-        }});
+            }));
 
-        snapshot.emplace(HUB("hub-light"), THubReport{
-            EP(42), HUB("hub-light"), DC("myt"), LF(20), {
+        snapshot.emplace_back(
+            EP(42), HUB("hub-light"), DC("myt"), LF(20), PWS({
                 {PID(2), PW(75)},
-            }});
+            }));
     }
 
     TPartitionMap map{
@@ -115,12 +115,12 @@ TEST_F(CollectActiveHubsTest, SortsHubsByForecastedLoad) {
     TCoordinationState state(map, snapshot, context, settings);
 
     // increasing load of light hub
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _))
-        .WillRepeatedly(Invoke([](TLoadFactor current, auto, auto) {
-            return current == TLoadFactor{80} ? TLoadFactor{85} : TLoadFactor{95};
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_))
+        .WillRepeatedly(Invoke([](TPredictionParams params) {
+            return params.LoadFactor == TLoadFactor{80} ? TLoadFactor{85} : TLoadFactor{95};
         }));
 
-    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, *Predictor_);
 
     ASSERT_EQ(sortedHubs.size(), 2);
     auto it = sortedHubs.begin();
@@ -130,9 +130,9 @@ TEST_F(CollectActiveHubsTest, SortsHubsByForecastedLoad) {
 
 TEST_F(CollectActiveHubsTest, PassesCorrectParamsToPredictor) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-a"), THubReport{EP(42), HUB("hub-a"), DC("myt"), LF(50), {
+    snapshot.emplace_back(EP(42), HUB("hub-a"), DC("myt"), LF(50), PWS({
         {PID(1), PW(50)} 
-    }});
+    }));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-a")}},
@@ -153,13 +153,17 @@ TEST_F(CollectActiveHubsTest, PassesCorrectParamsToPredictor) {
     
     TCoordinationState state(map, snapshot, context, settings);
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(
-        Eq(LF(50)), 
-        Eq(PW(50)),
-        Field(&TPredictionParams::TotalPartitions, 1)
-    )).WillOnce(Return(LF(60)));
-
-    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(50)),
+            Field(&TPredictionParams::PartitionWeight, PW(50)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 1),
+            Field(&TPredictionParams::PartitionsWeight, PW(50)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(50)))))
+        .WillOnce(Return(LF(60)));
+    
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, *Predictor_);
 
     ASSERT_EQ(sortedHubs.size(), 1);
     ASSERT_EQ(activeHubs.size(), 1);
@@ -168,9 +172,9 @@ TEST_F(CollectActiveHubsTest, PassesCorrectParamsToPredictor) {
 
 TEST_F(CollectActiveHubsTest, IncludesOverloadedHubs) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-overloaded"), THubReport{EP(42), HUB("hub-overloaded"), DC("myt"), LF(95), {
+    snapshot.emplace_back(EP(42), HUB("hub-overloaded"), DC("myt"), LF(95), PWS({
         {PID(1), PW(970)} 
-    }});
+    }));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-overloaded")}},
@@ -190,9 +194,9 @@ TEST_F(CollectActiveHubsTest, IncludesOverloadedHubs) {
 
     TCoordinationState state(map, snapshot, context, settings);
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).WillOnce(Return(TLoadFactor{99}));
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).WillOnce(Return(TLoadFactor{99}));
 
-    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, *Predictor_);
 
     ASSERT_EQ(activeHubs.size(), 1);
     EXPECT_TRUE(activeHubs.contains(HUB("hub-overloaded")));

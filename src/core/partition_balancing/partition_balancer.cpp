@@ -6,8 +6,8 @@ namespace NCoordinator::NCore {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TPartitionBalancer::TPartitionBalancer(TLoadFactorPredictorPtr predictor)
-    : LoadFactorPredictor_(std::move(predictor))
+TPartitionBalancer::TPartitionBalancer(ILoadFactorPredictor& predictor)
+    : LoadFactorPredictor_(predictor)
 { }
 
 TBalancingResult TPartitionBalancer::BalancePartitions(
