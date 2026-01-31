@@ -21,14 +21,14 @@ struct TBalancingResult {
 
 class TPartitionBalancer {
 public:
-    explicit TPartitionBalancer(TLoadFactorPredictorPtr predictor);
+    explicit TPartitionBalancer(ILoadFactorPredictor& predictor);
 
     TBalancingResult BalancePartitions(
         const NDomain::TCoordinationState& state,
         const TBalancingSettings& settings) const;
 
 private:
-    TLoadFactorPredictorPtr LoadFactorPredictor_;
+    ILoadFactorPredictor& LoadFactorPredictor_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

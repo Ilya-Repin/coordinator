@@ -19,11 +19,11 @@ class SeparatePartitionsTest
 
 TEST_F(SeparatePartitionsTest, CorrectLabelsAndSortsOrphanedPartitions) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-active"), THubReport{
-        EP(42), HUB("hub-active"), DC("myt"), LF(25), {
+    snapshot.emplace_back(
+        EP(42), HUB("hub-active"), DC("myt"), LF(25), PWS({
             {PID(1), PW(100)},
             {PID(3), PW(150)},
-    }});
+        }));
 
     TPartitionMap map{
         .Partitions{
@@ -49,10 +49,10 @@ TEST_F(SeparatePartitionsTest, CorrectLabelsAndSortsOrphanedPartitions) {
     };
 
     TCoordinationState state(map, snapshot, context, settings);
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _))
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_))
         .WillOnce(Return(TLoadFactor{25}));
 
-    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, Predictor_);
+    auto [activeHubs, sortedHubs] = CollectActiveHubs(state, *Predictor_);
     ASSERT_EQ(activeHubs.size(), 1);
 
     auto result = SeparatePartitions(state, activeHubs);
@@ -71,10 +71,10 @@ TEST_F(SeparatePartitionsTest, CorrectLabelsAndSortsOrphanedPartitions) {
 
 TEST_F(SeparatePartitionsTest, FallbackToAverageWeightWhenObservedMissing) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-active"), THubReport{
-        EP(42), HUB("hub-active"), DC("myt"), LF(25), {
+    snapshot.emplace_back(
+        EP(42), HUB("hub-active"), DC("myt"), LF(25), PWS({
             {PID(1), PW(200)},
-    }});
+        }));
 
     TPartitionMap map{
         .Partitions{
@@ -159,9 +159,7 @@ TEST_F(SeparatePartitionsTest, SortsOrphansByCalculatedWeightDescending) {
 
 TEST_F(SeparatePartitionsTest, AllHubsActiveNoOrphans) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-1"), THubReport{
-        EP(10), HUB("hub-1"), DC("dc1"), LF(10), {{PID(1), PW(100)}}
-    });
+    snapshot.emplace_back(EP(10), HUB("hub-1"), DC("dc1"), LF(10), PWS({{PID(1), PW(100)}}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-1")}},
@@ -187,9 +185,7 @@ TEST_F(SeparatePartitionsTest, AllHubsActiveNoOrphans) {
 
 TEST_F(SeparatePartitionsTest, AddsExpectedGrowthToWeight) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-1"), THubReport{
-        EP(10), HUB("hub-1"), DC("dc1"), LF(10), {{PID(1), PW(100)}}
-    });
+    snapshot.emplace_back(EP(10), HUB("hub-1"), DC("dc1"), LF(10), PWS({{PID(1), PW(100)}}));
 
     TPartitionMap map{
         .Partitions{{PID(1), HUB("hub-1")}},

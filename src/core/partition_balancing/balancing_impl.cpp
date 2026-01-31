@@ -10,7 +10,7 @@ namespace NCoordinator::NCore::NDetail {
 
 std::pair<THubEndpoints, TSortedHubs> CollectActiveHubs(
     const NDomain::TCoordinationState& state,
-    const TLoadFactorPredictorPtr& loadFactorPredictor)
+    const ILoadFactorPredictor& loadFactorPredictor)
 {
     TSortedHubs sortedHubs;
     THubEndpoints activeHubs;
@@ -25,16 +25,15 @@ std::pair<THubEndpoints, TSortedHubs> CollectActiveHubs(
         activeHubs.emplace(endpoint);
 
         TPredictionParams predictionParams {
+            .LoadFactor = hubState.LoadFactor, 
+            .PartitionWeight = hubState.ExpectedWeightGrowth,
             .Increasing = true,
             .TotalPartitions = hubState.TotalPartitions,
             .PartitionsWeight = hubState.PartitionsWeight,
             .OriginalLoadFactor = hubState.LoadFactor,
         };
         
-        NDomain::TLoadFactor forecastedLoad = loadFactorPredictor->PredictLoadFactor(
-            hubState.LoadFactor, 
-            hubState.ExpectedWeightGrowth,
-            predictionParams);
+        NDomain::TLoadFactor forecastedLoad = loadFactorPredictor.PredictLoadFactor(predictionParams);
         
         sortedHubs.emplace(forecastedLoad, endpoint);
     }
@@ -70,7 +69,7 @@ TSeparatedPartitions SeparatePartitions(
 TMigratingWeight AssignOrphanedPartitions(
     const NDomain::TCoordinationState& state,
     const TWeightedPartitions& orphanedPartitions,
-    const TLoadFactorPredictorPtr& loadFactorPredictor,
+    const ILoadFactorPredictor& loadFactorPredictor,
     TSortedHubs& sortedHubs,
     TAssignedPartitions& assignedPartitions)
 {
@@ -90,12 +89,14 @@ TMigratingWeight AssignOrphanedPartitions(
         assignedPartitions.emplace_back(partitionId, hub);
 
         TPredictionParams params {
+            .LoadFactor = loadFactor,
+            .PartitionWeight = partitionWeight,
             .Increasing = true,
             .TotalPartitions = hubState.TotalPartitions + migratingWeight[hub].first,
             .PartitionsWeight = hubState.PartitionsWeight + migratingWeight[hub].second,
             .OriginalLoadFactor = hubState.LoadFactor,
         };
-        loadFactor = loadFactorPredictor->PredictLoadFactor(loadFactor, partitionWeight, params);
+        loadFactor = loadFactorPredictor.PredictLoadFactor(params);
         
         migratingWeight[hub].first++;
         migratingWeight[hub].second += partitionWeight;
@@ -122,7 +123,7 @@ void RebalancePartitions(
     TSortedHubs& sortedHubs,
     TAssignedPartitions& assignedPartitions,
     TMigrationContext& migrationContext,
-    const TLoadFactorPredictorPtr& loadFactorPredictor,
+    const ILoadFactorPredictor& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
     const TBalancingSettings& settings)
 {
@@ -174,7 +175,7 @@ void ExecuteRebalancingPhase(
     TSortedHubs& sortedHubs, 
     THubPartitions& hubPartitions, 
     TMigrationContext& migrationContext,
-    const TLoadFactorPredictorPtr& loadFactorPredictor,
+    const ILoadFactorPredictor& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
     const TBalancingSettings& settings)
 {
@@ -212,11 +213,23 @@ void ExecuteRebalancingPhase(
                 }
             }
 
-            auto maxParams = BuildPredictionParams(false, hubPartitions[maxHub], state.GetHubState(maxHub));
-            auto nextMaxLoadFactor = loadFactorPredictor->PredictLoadFactor(maxLoadFactor, partitionWeight, maxParams);
+            auto maxParams = BuildPredictionParams(
+                maxLoadFactor,
+                partitionWeight,
+                false,
+                hubPartitions[maxHub],
+                state.GetHubState(maxHub));
+
+            auto nextMaxLoadFactor = loadFactorPredictor.PredictLoadFactor(maxParams);
             
-            auto minParams = BuildPredictionParams(true, hubPartitions[minHub], state.GetHubState(minHub));
-            auto nextMinLoadFactor = loadFactorPredictor->PredictLoadFactor(minLoadFactor, partitionWeight, minParams);
+            auto minParams = BuildPredictionParams(
+                minLoadFactor,
+                partitionWeight,
+                true,
+                hubPartitions[minHub],
+                state.GetHubState(minHub));
+
+            auto nextMinLoadFactor = loadFactorPredictor.PredictLoadFactor(minParams);
 
             auto currentDelta = maxLoadFactor - minLoadFactor;
             auto nextDelta = nextMaxLoadFactor - nextMinLoadFactor;
@@ -250,11 +263,15 @@ void ExecuteRebalancingPhase(
 }
 
 TPredictionParams BuildPredictionParams(
+    const NDomain::TLoadFactor loadFactor,
+    const NDomain::TPartitionWeight partitionWeight,
     const bool increasing,
     const std::set<TWeightedPartition>& partitions,
     const NDomain::THubState& state)
 {
     return TPredictionParams{
+        .LoadFactor = loadFactor,
+        .PartitionWeight = partitionWeight,
         .Increasing = increasing,
         .TotalPartitions = partitions.size(),
         .PartitionsWeight = 

@@ -38,14 +38,14 @@ struct TMigrationContext {
 
 std::pair<THubEndpoints, TSortedHubs> CollectActiveHubs(
     const NDomain::TCoordinationState& state,
-    const TLoadFactorPredictorPtr& loadFactorPredictor);
+    const ILoadFactorPredictor& loadFactorPredictor);
 
 TSeparatedPartitions SeparatePartitions(const NDomain::TCoordinationState& state, const THubEndpoints& activeHubs);
 
 TMigratingWeight AssignOrphanedPartitions(
     const NDomain::TCoordinationState& state,
     const TWeightedPartitions& orphanedPartitions,
-    const TLoadFactorPredictorPtr& loadFactorPredictor,
+    const ILoadFactorPredictor& loadFactorPredictor,
     TSortedHubs& sortedHubs,
     TAssignedPartitions& assignedPartitions);
 
@@ -56,7 +56,7 @@ void RebalancePartitions(
     TSortedHubs& sortedHubs,
     TAssignedPartitions& assignedPartitions,
     TMigrationContext& migrationContext,
-    const TLoadFactorPredictorPtr& loadFactorPredictor,
+    const ILoadFactorPredictor& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
     const TBalancingSettings& settings);
 
@@ -64,11 +64,13 @@ void ExecuteRebalancingPhase(
     TSortedHubs& sortedHubs, 
     THubPartitions& hubPartitions, 
     TMigrationContext& migrationContext,
-    const TLoadFactorPredictorPtr& loadFactorPredictor,
+    const ILoadFactorPredictor& loadFactorPredictor,
     const NDomain::TCoordinationState& state,
     const TBalancingSettings& settings);
 
 TPredictionParams BuildPredictionParams(
+    const NDomain::TLoadFactor loadFactor,
+    const NDomain::TPartitionWeight partitionWeight,
     const bool increasing,
     const std::set<TWeightedPartition>& partitions,
     const NDomain::THubState& state);

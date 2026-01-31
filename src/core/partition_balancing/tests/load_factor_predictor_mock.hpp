@@ -15,9 +15,7 @@ class TMockLoadFactorPredictor
 {
 public:
     MOCK_METHOD(NDomain::TLoadFactor, PredictLoadFactor,
-        (const NDomain::TLoadFactor loadFactor,
-        const NDomain::TPartitionWeight partitionWeight,
-        const TPredictionParams& params),
+        (const TPredictionParams& params),
         (const, override));
 };
 

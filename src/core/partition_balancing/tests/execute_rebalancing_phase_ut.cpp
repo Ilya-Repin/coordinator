@@ -29,16 +29,26 @@ protected:
             hubPartitions[hub].insert({weight, pid});
         }
     }
+
+    TBalancingSettings GetDefaultSettings()
+    {
+        return TBalancingSettings{
+            .MaxRebalancePhases = 3,
+            .MigratingWeightLimit = PW(1000),
+            .MinLoadFactorDelta = LF(5),
+            .MigrationBudgetThreshold = PW(5),
+            .BalancingThresholdCV = 25,
+            .BalancingTargetCV = 10,
+            .MinMigrationCooldown = EP(5),
+            .MigrationWeightPenaltyCoeff = 0.5,
+        };
+    }
 };
 
 TEST_F(ExecuteRebalancingPhaseTest, MovesPartitionWhenImbalanceIsHigh) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-max"), THubReport{
-        EP(100), HUB("hub-max"), DC("myt"), LF(90), { {PID(1), PW(20)} }
-    });
-    snapshot.emplace(HUB("hub-min"), THubReport{
-        EP(100), HUB("hub-min"), DC("myt"), LF(10), {}
-    });
+    snapshot.emplace_back(EP(100), HUB("hub-max"), DC("myt"), LF(90), PWS({{PID(1), PW(20)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-min"), DC("myt"), LF(10), PWS({}));
 
     TPartitionMap map{
         .Partitions{ {PID(1), HUB("hub-max")} },
@@ -59,17 +69,32 @@ TEST_F(ExecuteRebalancingPhaseTest, MovesPartitionWhenImbalanceIsHigh) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-min"), LF(10), {});
 
     TMigrationContext migrationContext;
-    TBalancingSettings settings;
+    
+    auto settings = GetDefaultSettings();
     settings.MinLoadFactorDelta = LF(10);
     settings.MigratingWeightLimit = PW(1000);
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(90), PW(20), _))
-        .WillRepeatedly(Return(LF(70)));
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(90)),
+            Field(&TPredictionParams::PartitionWeight, PW(20)),
+            Field(&TPredictionParams::Increasing, false),
+            Field(&TPredictionParams::TotalPartitions, 1),
+            Field(&TPredictionParams::PartitionsWeight, PW(20)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(90)))))
+        .WillOnce(Return(LF(70)));
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(10), PW(20), _))
-        .WillRepeatedly(Return(LF(30)));
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(10)),
+            Field(&TPredictionParams::PartitionWeight, PW(20)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(10)))))
+        .WillOnce(Return(LF(30)));
 
-    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, Predictor_, state, settings);
+    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, *Predictor_, state, settings);
 
     EXPECT_TRUE(hubPartitions[HUB("hub-max")].empty());
 
@@ -83,12 +108,8 @@ TEST_F(ExecuteRebalancingPhaseTest, MovesPartitionWhenImbalanceIsHigh) {
 
 TEST_F(ExecuteRebalancingPhaseTest, SkipsMigrationIfCooldownIsActive) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-max"), THubReport{
-        EP(100), HUB("hub-max"), DC("myt"), LF(90), { {PID(1), PW(20)} }
-    });
-    snapshot.emplace(HUB("hub-min"), THubReport{
-        EP(100), HUB("hub-min"), DC("myt"), LF(10), {}
-    });
+    snapshot.emplace_back(EP(100), HUB("hub-max"), DC("myt"), LF(90), PWS({{PID(1), PW(20)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-min"), DC("myt"), LF(10), PWS({}));
 
     TPartitionMap map{
         .Partitions{ {PID(1), HUB("hub-max")} },
@@ -109,11 +130,11 @@ TEST_F(ExecuteRebalancingPhaseTest, SkipsMigrationIfCooldownIsActive) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-min"), LF(10), {});
 
     TMigrationContext migrationContext;
-    TBalancingSettings settings;
+    auto settings = GetDefaultSettings();
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).Times(0);
 
-    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, Predictor_, state, settings);
+    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, *Predictor_, state, settings);
 
     EXPECT_EQ(hubPartitions[HUB("hub-max")].size(), 1u);
     EXPECT_TRUE(migrationContext.MigratingPartitions.empty());
@@ -121,8 +142,8 @@ TEST_F(ExecuteRebalancingPhaseTest, SkipsMigrationIfCooldownIsActive) {
 
 TEST_F(ExecuteRebalancingPhaseTest, StopsIfDeltaIsTooSmall) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-1"), THubReport{EP(100), HUB("hub-1"), DC("myt"), LF(55), {{PID(1), PW(10)}}});
-    snapshot.emplace(HUB("hub-2"), THubReport{EP(100), HUB("hub-2"), DC("myt"), LF(50), {}});
+    snapshot.emplace_back(EP(100), HUB("hub-1"), DC("myt"), LF(55), PWS({{PID(1), PW(10)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-2"), DC("myt"), LF(50), PWS({}));
 
     TPartitionMap map{ .Partitions{{PID(1), HUB("hub-1")}}, .Epoch{EP(100)} };
     TCoordinationContext context; 
@@ -135,12 +156,13 @@ TEST_F(ExecuteRebalancingPhaseTest, StopsIfDeltaIsTooSmall) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-2"), LF(50), {});
 
     TMigrationContext migrationContext;
-    TBalancingSettings settings;
+    
+    auto settings = GetDefaultSettings();
     settings.MinLoadFactorDelta = LF(10);
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(_, _, _)).Times(0);
+    EXPECT_CALL(*Predictor_, PredictLoadFactor(_)).Times(0);
 
-    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, Predictor_, state, settings);
+    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, *Predictor_, state, settings);
 
     EXPECT_EQ(hubPartitions[HUB("hub-1")].size(), 1u);
     EXPECT_TRUE(migrationContext.MigratingPartitions.empty());
@@ -148,8 +170,8 @@ TEST_F(ExecuteRebalancingPhaseTest, StopsIfDeltaIsTooSmall) {
 
 TEST_F(ExecuteRebalancingPhaseTest, PreventsOvershoot) {
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-max"), THubReport{EP(100), HUB("hub-max"), DC("myt"), LF(100), {{PID(1), PW(30)}}});
-    snapshot.emplace(HUB("hub-min"), THubReport{EP(100), HUB("hub-min"), DC("myt"), LF(90), {}});
+    snapshot.emplace_back(EP(100), HUB("hub-max"), DC("myt"), LF(100), PWS({{PID(1), PW(30)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-min"), DC("myt"), LF(90), PWS({}));
 
     TPartitionMap map{ .Partitions{{PID(1), HUB("hub-max")}}, .Epoch{EP(100)} };
     TCoordinationContext context;
@@ -162,13 +184,32 @@ TEST_F(ExecuteRebalancingPhaseTest, PreventsOvershoot) {
     AddHubToStructures(sortedHubs, hubPartitions, HUB("hub-min"), LF(90), {});
 
     TMigrationContext migrationContext;
-    TBalancingSettings settings;
+
+    auto settings = GetDefaultSettings();
     settings.MinLoadFactorDelta = LF(5);
+    settings.MigratingWeightLimit = PW(100);
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(100), PW(30), _)).WillRepeatedly(Return(LF(70)));
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(90), PW(30), _)).WillRepeatedly(Return(LF(120)));
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(100)),
+            Field(&TPredictionParams::PartitionWeight, PW(30)),
+            Field(&TPredictionParams::Increasing, false),
+            Field(&TPredictionParams::TotalPartitions, 1),
+            Field(&TPredictionParams::PartitionsWeight, PW(30)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(100)))))
+        .WillOnce(Return(LF(70)));
 
-    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, Predictor_, state, settings);
+    EXPECT_CALL(*Predictor_, 
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(90)),
+            Field(&TPredictionParams::PartitionWeight, PW(30)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(90)))))
+        .WillOnce(Return(LF(120)));
+
+    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, *Predictor_, state, settings);
 
     EXPECT_EQ(hubPartitions[HUB("hub-max")].size(), 1u);
     EXPECT_TRUE(migrationContext.MigratingPartitions.empty());
@@ -176,8 +217,8 @@ TEST_F(ExecuteRebalancingPhaseTest, PreventsOvershoot) {
 
 TEST_F(ExecuteRebalancingPhaseTest, UpdatesContextWhenCancellingMigration) {    
     TCoordinationState::TClusterSnapshot snapshot;
-    snapshot.emplace(HUB("hub-max"), THubReport{EP(100), HUB("hub-max"), DC("myt"), LF(80), {{PID(1), PW(10)}}});
-    snapshot.emplace(HUB("hub-min"), THubReport{EP(100), HUB("hub-min"), DC("myt"), LF(20), {}});
+    snapshot.emplace_back(EP(100), HUB("hub-max"), DC("myt"), LF(80), PWS({{PID(1), PW(10)}}));
+    snapshot.emplace_back(EP(100), HUB("hub-min"), DC("myt"), LF(20), PWS({}));
 
     TPartitionMap map{ .Partitions{{PID(1), HUB("hub-max")}}, .Epoch{EP(100)} };
     TCoordinationContext context;
@@ -193,12 +234,29 @@ TEST_F(ExecuteRebalancingPhaseTest, UpdatesContextWhenCancellingMigration) {
     migrationContext.MigratingPartitions.emplace(PID(1), HUB("hub-min"));
     migrationContext.TotalMigratingWeight = PW(50);
 
-    TBalancingSettings settings;
+    auto settings = GetDefaultSettings();
 
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(80), PW(10), _)).WillRepeatedly(Return(LF(70)));
-    EXPECT_CALL(*Predictor_, PredictLoadFactor(LF(20), PW(10), _)).WillRepeatedly(Return(LF(30)));
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(80)),
+            Field(&TPredictionParams::PartitionWeight, PW(10)),
+            Field(&TPredictionParams::Increasing, false),
+            Field(&TPredictionParams::TotalPartitions, 1),
+            Field(&TPredictionParams::PartitionsWeight, PW(10)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(80)))))
+        .WillOnce(Return(LF(70)));
 
-    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, Predictor_, state, settings);
+    EXPECT_CALL(*Predictor_,
+        PredictLoadFactor(AllOf(
+            Field(&TPredictionParams::LoadFactor, LF(20)),
+            Field(&TPredictionParams::PartitionWeight, PW(10)),
+            Field(&TPredictionParams::Increasing, true),
+            Field(&TPredictionParams::TotalPartitions, 0),
+            Field(&TPredictionParams::PartitionsWeight, PW(0)),
+            Field(&TPredictionParams::OriginalLoadFactor, LF(20)))))
+        .WillOnce(Return(LF(30)));
+
+    ExecuteRebalancingPhase(sortedHubs, hubPartitions, migrationContext, *Predictor_, state, settings);
 
     EXPECT_EQ(hubPartitions[HUB("hub-min")].size(), 1u);
 

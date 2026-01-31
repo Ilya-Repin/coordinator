@@ -33,6 +33,10 @@ TPartitionMap MakePartitionMap()
 
 } // anonymous namespace
 
+namespace NCoordinator::NInfra {
+
+////////////////////////////////////////////////////////////////////////////////
+
 TEST(PartitionMapSerializer, SerializeProducesValidJson)
 {
     const auto map = MakePartitionMap();
@@ -124,3 +128,7 @@ TEST(HubReportDeserializer, HandlesEmptyPartitions)
 
     EXPECT_TRUE(report.PartitionWeights.empty());
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+} // namespace NCoordinator::NInfra

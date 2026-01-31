@@ -4,7 +4,7 @@
 #include <userver/components/component_context.hpp>
 #include <userver/server/handlers/http_handler_json_base.hpp>
 #include <userver/ydb/coordination.hpp>
-#include <infra/components/coordination/coordination_dist_lock_component.hpp>
+#include <infra/components/leader/leader_dist_lock_component.hpp>
 #include <infra/coordination_gateway/kesus_coordination_gateway.hpp>
 
 #include <userver/ydb/component.hpp>
@@ -27,8 +27,7 @@ public:
 
 private:
     NYdb::NCoordination::TSessionSettings settings;
-    std::shared_ptr<userver::ydb::CoordinationClient> ydb_client_;
-    std::unique_ptr<NCoordinator::NCore::NDomain::ICoordinationGateway> gateway;
+    NCoordinator::NCore::NDomain::ICoordinationGateway& gateway;
 };
 
 }  // namespace coordinator

@@ -91,8 +91,8 @@ void TCoordinationState::ApplyClusterSnapshot(
 {
     std::unordered_map<THubEndpoint, TPartitionWeight> expectedWeightGrowths;
 
-    for (const auto& [hub, report] : snapshot) {
-        THubState& state = HubStates_[hub];
+    for (const auto& report : snapshot) {
+        THubState& state = HubStates_[report.Endpoint];
 
         state.Endpoint = report.Endpoint;
         state.DC = report.DC;

@@ -73,11 +73,18 @@ components_manager:
             discovery-semaphore: discovery-lock
             initial-setup: true
 
-        coordination-dist-lock:
+        hub-gateway:
+
+        load-factor-predictor:
+            type: heuristic
+
+        leader-dist-lock:
             database-settings:
                 dbname: chat_db
                 coordination-node: chat-coordination
             semaphore-name: partition-map-lock
+
+        leader-service:
 
         handler-ping:
             path: /ping

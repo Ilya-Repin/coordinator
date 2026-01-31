@@ -7,7 +7,7 @@ namespace NCoordinator::NCore {
 ////////////////////////////////////////////////////////////////////////////////
 
 void TBalancingTestBase::SetUp() {
-    Predictor_ = std::make_shared<TMockLoadFactorPredictor>();
+    Predictor_ = std::make_unique<TMockLoadFactorPredictor>();
 }
 
 TEpoch TBalancingTestBase::EP(TEpoch::UnderlyingType epoch) const
@@ -23,6 +23,12 @@ TPartitionId TBalancingTestBase::PID(TPartitionId::UnderlyingType partitionId) c
 TPartitionWeight TBalancingTestBase::PW(TPartitionWeight::UnderlyingType partitionWeight) const
 {
     return TPartitionWeight(partitionWeight);
+}
+
+std::unordered_map<TPartitionId, TPartitionWeight> TBalancingTestBase::PWS(
+    std::initializer_list<std::pair<const TPartitionId, TPartitionWeight>> list) const
+{
+    return std::unordered_map<TPartitionId, TPartitionWeight>(list);
 }
 
 THubEndpoint TBalancingTestBase::HUB(THubEndpoint::UnderlyingType hub) const
