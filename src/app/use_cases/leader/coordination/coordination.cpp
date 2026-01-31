@@ -2,6 +2,8 @@
 
 #include <core/coordination/coordination_state.hpp>
 
+#include <userver/logging/log.hpp>
+
 namespace NCoordinator::NApp::NUseCase {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,8 +24,13 @@ void TCoordinationUseCase::Execute(const NDto::TCoordinationRequest& request) co
     auto hubDiscovery = CoordinationGateway_.GetHubDiscovery();
     auto hubReports = HubGateway_.GetHubReports(hubDiscovery);
 
-    auto partitionMap = CoordinationGateway_.GetPartitionMap().value();
-    
+    auto partitionMapOpt = CoordinationGateway_.GetPartitionMap();
+    if (!partitionMapOpt.has_value()) {
+        LOG_ERROR() << "Failed to get partition map";
+        return;
+    }
+    auto partitionMap = partitionMapOpt.value();
+
     auto coordinationContext = CoordinationRepository_.GetCoordinationContext();
 
     auto coordinationState = NCore::NDomain::TCoordinationState(

@@ -43,6 +43,7 @@ components_manager:
             fs-task-processor: fs-task-processor
 
         dns-client:
+            load-enabled: true
             fs-task-processor: fs-task-processor
 
         tests-control:
@@ -52,6 +53,7 @@ components_manager:
             task_processor: main-task-processor
 
         ydb:
+            load-enabled: true
             operation-settings:
                 cancel-after: 1000ms
                 client-timeout: 1100ms
@@ -64,9 +66,11 @@ components_manager:
                     min_pool_size: 5
 
         coordination-repository:
+            load-enabled: true
             dbname: chat_db
 
         coordination-gateway:
+            load-enabled: true
             dbname: chat_db
             coordination-node: chat-coordination
             partition-map-semaphore: partition-map-lock
@@ -74,19 +78,24 @@ components_manager:
             initial-setup: true
 
         hub-gateway:
+            load-enabled: true
 
         load-factor-predictor:
+            load-enabled: true
             type: heuristic
 
         leader-dist-lock:
+            load-enabled: true
             database-settings:
                 dbname: chat_db
                 coordination-node: chat-coordination
             semaphore-name: partition-map-lock
 
         leader-service:
+            load-enabled: true
 
         handler-ping:
+            load-enabled: true
             path: /ping
             method: GET
             task_processor: main-task-processor
@@ -94,6 +103,7 @@ components_manager:
             url_trailing_slash: strict-match
 
         handler-hello:                    # Finally! Our handler.
+            load-enabled: true
             path: /hello                  # Registering handler by URL '/hello'.
             method: GET,POST              # It will only reply to GET (HEAD) and POST requests.
             task_processor: main-task-processor  # Run it on CPU bound task processor
