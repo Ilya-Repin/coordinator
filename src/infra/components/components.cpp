@@ -1,13 +1,13 @@
 #include "components.hpp"
 
+#include <api/http/v1/admin/get_context.hpp>
+#include <infra/components/admin/admin_service_component.hpp>
 #include <infra/components/leader/leader_service_component.hpp>
 #include <infra/components/leader/leader_dist_lock_component.hpp>
 #include <infra/components/coordination/coordination_gateway_component.hpp>
 #include <infra/components/coordination/coordination_repository_component.hpp>
 #include <infra/components/hub/hub_gateway_component.hpp>
 #include <infra/components/partition_balancing/load_factor_predictor_component.hpp>
-
-#include <hello.hpp>
 
 #include <userver/clients/dns/component.hpp>
 #include <userver/clients/http/component_list.hpp>
@@ -56,13 +56,14 @@ void RegisterInfraComponents(userver::components::ComponentList& list)
 // Services
 void RegisterServices(userver::components::ComponentList& list)
 {
-    list.Append<TLeaderServiceComponent>();
+    list.Append<TLeaderServiceComponent>()
+        .Append<TAdminServiceComponent>();
 }
 
 // Handlers
 void RegisterHandlers(userver::components::ComponentList& list)
 {
-    list.Append<coordinator::Hello>();
+    list.Append<NHandlers::TGetContextHandler>();
 }
 
 }  // namespace NCoordinator::NInfra::NComponents

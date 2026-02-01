@@ -29,6 +29,22 @@ TPartitionMap MakePartitionMap()
     return map;
 }
 
+TCoordinationContext MakeTestContext() {
+    TCoordinationContext context;
+
+    auto idBoth = TPartitionId{10};
+    context.PartitionCooldowns[idBoth] = TEpoch{100};
+    context.PartitionWeights[idBoth] = TPartitionWeight{50};
+
+    auto idOnlyCooldown = TPartitionId{20};
+    context.PartitionCooldowns[idOnlyCooldown] = TEpoch{200};
+
+    auto idOnlyWeight = TPartitionId{30};
+    context.PartitionWeights[idOnlyWeight] = TPartitionWeight{300};
+
+    return context;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 } // anonymous namespace
@@ -84,6 +100,45 @@ TEST(PartitionMapSerializer, HandlesEmptyPartitions)
 
     EXPECT_EQ(restored.Epoch, TEpoch{123});
     EXPECT_TRUE(restored.Partitions.empty());
+}
+
+TEST(CoordinationContextSerializer, RoundTripRestoresAllCombinations) {
+    const auto original = MakeTestContext();
+
+    const auto json = SerializeCoordinationContext(original);
+    const auto restored = DeserializeCoordinationContext(json);
+
+    ASSERT_EQ(restored.PartitionCooldowns.size(), original.PartitionCooldowns.size());
+    for (const auto& [id, epoch] : original.PartitionCooldowns) {
+        ASSERT_TRUE(restored.PartitionCooldowns.count(id)) << "Missing ID in cooldowns: " << id.GetUnderlying();
+        EXPECT_EQ(restored.PartitionCooldowns.at(id), epoch);
+    }
+
+    ASSERT_EQ(restored.PartitionWeights.size(), original.PartitionWeights.size());
+    for (const auto& [id, weight] : original.PartitionWeights) {
+        ASSERT_TRUE(restored.PartitionWeights.count(id)) << "Missing ID in weights: " << id.GetUnderlying();
+        EXPECT_EQ(restored.PartitionWeights.at(id), weight);
+    }
+}
+
+TEST(CoordinationContextSerializer, JsonStructureCheck) {
+    const auto context = MakeTestContext();
+    const auto json = SerializeCoordinationContext(context);
+
+    ASSERT_TRUE(json["partitions_context"].IsArray());
+    EXPECT_EQ(json["partitions_context"].GetSize(), 3);
+
+    for (const auto& item : json["partitions_context"]) {
+        uint64_t id = item["id"].As<uint64_t>();
+        
+        if (id == 20) {
+            EXPECT_TRUE(item.HasMember("cooldown_epoch"));
+            EXPECT_FALSE(item.HasMember("partition_weight"));
+        } else if (id == 30) {
+            EXPECT_FALSE(item.HasMember("cooldown_epoch"));
+            EXPECT_TRUE(item.HasMember("partition_weight"));
+        }
+    }
 }
 
 TEST(HubReportDeserializer, ParsesValidReport)

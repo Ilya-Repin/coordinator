@@ -14,8 +14,8 @@ class TLeaderService final
 {
 public:
    TLeaderService(
-        NCore::NDomain::ICoordinationGateway& coordinationGateway_,
-        NCore::NDomain::ICoordinationRepository& coordinationRepository_,
+        NCore::NDomain::ICoordinationGateway& coordinationGateway,
+        NCore::NDomain::ICoordinationRepository& coordinationRepository,
         NCore::NDomain::IHubGateway& hubGateway,
         NCore::ILoadFactorPredictor& loadFactorPredictor);
 

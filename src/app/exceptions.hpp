@@ -1,0 +1,18 @@
+#pragma once
+
+#include <stdexcept>
+
+namespace NCoordinator::NApp {
+
+////////////////////////////////////////////////////////////////////////////////
+
+class TApplicationException
+    : public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+}  // namespace NCoordinator::NApp

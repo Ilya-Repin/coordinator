@@ -6,6 +6,8 @@
 
 #include <userver/formats/json/value_builder.hpp>
 
+#include <unordered_set>
+
 namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -13,7 +15,10 @@ namespace {
 constexpr inline std::string_view EPOCH_KEY = "epoch";
 constexpr inline std::string_view PARTITIONS_KEY = "partitions";
 constexpr inline std::string_view PARTITION_ID_KEY = "id";
+constexpr inline std::string_view PARTITION_WEIGHT_KEY = "partition_weight";
+constexpr inline std::string_view PARTITIONS_CONTEXT_KEY = "partitions_context";
 constexpr inline std::string_view HUB_ENDPOINT_KEY = "hub";
+constexpr inline std::string_view COOLDOWN_EPOCH_KEY = "cooldown_epoch";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -41,6 +46,37 @@ userver::formats::json::Value SerializePartitionMap(
     return result.ExtractValue();
 }
 
+userver::formats::json::Value SerializeCoordinationContext(const NCore::NDomain::TCoordinationContext& context)
+{
+    userver::formats::json::ValueBuilder result;
+    result[PARTITIONS_CONTEXT_KEY.data()] = userver::formats::common::Type::kArray;
+
+    std::unordered_set<NCore::NDomain::TPartitionId> allIds;
+    for (const auto& [id, _] : context.PartitionCooldowns) {
+        allIds.insert(id);
+    }
+    for (const auto& [id, _] : context.PartitionWeights) {
+        allIds.insert(id);
+    }
+
+    for (const auto& partitionId : allIds) {
+        userver::formats::json::ValueBuilder item;
+        item[PARTITION_ID_KEY.data()] = partitionId.GetUnderlying();
+
+        if (auto it = context.PartitionCooldowns.find(partitionId); it != context.PartitionCooldowns.end()) {
+            item[COOLDOWN_EPOCH_KEY.data()] = it->second.GetUnderlying();
+        }
+
+        if (auto it = context.PartitionWeights.find(partitionId); it != context.PartitionWeights.end()) {
+            item[PARTITION_WEIGHT_KEY.data()] = it->second.GetUnderlying();
+        }
+
+        result[PARTITIONS_CONTEXT_KEY.data()].PushBack(item.ExtractValue());
+    }
+
+    return result.ExtractValue();
+}
+
 NCore::NDomain::TPartitionMap DeserializePartitionMap(const userver::formats::json::Value& jsonValue)
 {
     NCore::NDomain::TPartitionMap result;
@@ -60,6 +96,27 @@ NCore::NDomain::TPartitionMap DeserializePartitionMap(const userver::formats::js
     }
 
     return result;
+}
+
+NCore::NDomain::TCoordinationContext DeserializeCoordinationContext(const userver::formats::json::Value& json)
+{
+    NCore::NDomain::TCoordinationContext context;
+
+    for (const auto& item : json[PARTITIONS_CONTEXT_KEY.data()]) {
+        auto partitionId = NCore::NDomain::TPartitionId{item[PARTITION_ID_KEY.data()].As<uint64_t>()};
+
+        if (item.HasMember(COOLDOWN_EPOCH_KEY.data())) {
+            context.PartitionCooldowns[partitionId] = 
+                NCore::NDomain::TEpoch{item[COOLDOWN_EPOCH_KEY.data()].As<uint64_t>()};
+        }
+
+        if (item.HasMember(PARTITION_WEIGHT_KEY.data())) {
+            context.PartitionWeights[partitionId] = 
+                NCore::NDomain::TPartitionWeight{item[PARTITION_WEIGHT_KEY.data()].As<uint64_t>()};
+        }
+    }
+
+    return context;
 }
 
 NCore::NDomain::THubReport DeserializeHubReport(const userver::formats::json::Value& jsonValue)
