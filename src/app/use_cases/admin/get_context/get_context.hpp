@@ -1,6 +1,7 @@
 #pragma once
 
-#include <app/dto/leader/coordination.hpp>
+#include <app/exceptions.hpp>
+#include <app/dto/admin/get_context.hpp>
 #include <core/coordination/coordination_gateway.hpp>
 #include <core/coordination/coordination_repository.hpp>
 #include <core/partition_balancing/partition_balancer.hpp>
@@ -11,23 +12,21 @@ namespace NCoordinator::NApp::NUseCase {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TCoordinationUseCase final
+class TGetContextTemporaryUnavailable
+    : public TApplicationException
+{
+  using TApplicationException::TApplicationException;
+};
+
+class TGetContextUseCase final
 {
 public:
-   TCoordinationUseCase(
-        NCore::NDomain::ICoordinationGateway& coordinationGateway,
-        NCore::NDomain::ICoordinationRepository& coordinationRepository,
-        NCore::NDomain::IHubGateway& hubGateway,
-        NCore::ILoadFactorPredictor& loadFactorPredictor);
+   TGetContextUseCase(NCore::NDomain::ICoordinationRepository& coordinationRepository);
 
-   void Execute(const NDto::TCoordinationRequest& request) const;
+   NDto::TGetContextResponse Execute() const;
 
 private:
-    NCore::NDomain::ICoordinationGateway& CoordinationGateway_;
     NCore::NDomain::ICoordinationRepository& CoordinationRepository_;
-    NCore::NDomain::IHubGateway& HubGateway_;
-
-    NCore::TPartitionBalancer Balancer_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

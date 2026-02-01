@@ -9,12 +9,12 @@ namespace NCoordinator::NApp::NUseCase {
 ////////////////////////////////////////////////////////////////////////////////
 
 TCoordinationUseCase::TCoordinationUseCase(
-    NCore::NDomain::ICoordinationGateway& coordinationGateway_,
-    NCore::NDomain::ICoordinationRepository& coordinationRepository_,
+    NCore::NDomain::ICoordinationGateway& coordinationGateway,
+    NCore::NDomain::ICoordinationRepository& coordinationRepository,
     NCore::NDomain::IHubGateway& hubGateway,
     NCore::ILoadFactorPredictor& loadFactorPredictor)
-    : CoordinationGateway_(coordinationGateway_)
-    , CoordinationRepository_(coordinationRepository_)
+    : CoordinationGateway_(coordinationGateway)
+    , CoordinationRepository_(coordinationRepository)
     , HubGateway_(hubGateway)
     , Balancer_(loadFactorPredictor)
 { }

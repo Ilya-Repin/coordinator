@@ -7,11 +7,11 @@ namespace NCoordinator::NApp::NService {
 ////////////////////////////////////////////////////////////////////////////////
 
 TLeaderService::TLeaderService(
-    NCore::NDomain::ICoordinationGateway& coordinationGateway_,
-    NCore::NDomain::ICoordinationRepository& coordinationRepository_,
+    NCore::NDomain::ICoordinationGateway& coordinationGateway,
+    NCore::NDomain::ICoordinationRepository& coordinationRepository,
     NCore::NDomain::IHubGateway& hubGateway,
     NCore::ILoadFactorPredictor& loadFactorPredictor)
-    : CoordinationUseCase_(coordinationGateway_, coordinationRepository_, hubGateway, loadFactorPredictor)
+    : CoordinationUseCase_(coordinationGateway, coordinationRepository, hubGateway, loadFactorPredictor)
 { }
 
 void TLeaderService::Coordinate(const NDto::TCoordinationRequest& request) const

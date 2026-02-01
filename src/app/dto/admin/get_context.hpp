@@ -1,0 +1,15 @@
+#pragma once
+
+#include <core/coordination/coordination_context.hpp>
+
+namespace NCoordinator::NApp::NDto {
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct TGetContextResponse {
+    NCore::NDomain::TCoordinationContext Context;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+} // namespace NCoordinator::NApp::NDto
