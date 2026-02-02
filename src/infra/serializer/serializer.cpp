@@ -13,11 +13,14 @@ namespace {
 ////////////////////////////////////////////////////////////////////////////////
 
 constexpr inline std::string_view EPOCH_KEY = "epoch";
+constexpr inline std::string_view DC_KEY = "dc";
+constexpr inline std::string_view LOAD_FACTOR_KEY = "load_factor";
 constexpr inline std::string_view PARTITIONS_KEY = "partitions";
 constexpr inline std::string_view PARTITION_ID_KEY = "id";
 constexpr inline std::string_view PARTITION_WEIGHT_KEY = "partition_weight";
 constexpr inline std::string_view PARTITIONS_CONTEXT_KEY = "partitions_context";
-constexpr inline std::string_view HUB_ENDPOINT_KEY = "hub";
+constexpr inline std::string_view HUB_KEY = "hub";
+constexpr inline std::string_view ENDPOINT_KEY = "endpoint";
 constexpr inline std::string_view COOLDOWN_EPOCH_KEY = "cooldown_epoch";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +41,7 @@ userver::formats::json::Value SerializePartitionMap(
     for (const auto& [partition, hub] : partitionMap.Partitions) {
         userver::formats::json::ValueBuilder pair;
         pair[PARTITION_ID_KEY.data()] = partition.GetUnderlying();
-        pair[HUB_ENDPOINT_KEY.data()] = hub.GetUnderlying();
+        pair[HUB_KEY.data()] = hub.GetUnderlying();
 
         result[PARTITIONS_KEY.data()].PushBack(pair.ExtractValue());
     }
@@ -77,6 +80,29 @@ userver::formats::json::Value SerializeCoordinationContext(const NCore::NDomain:
     return result.ExtractValue();
 }
 
+userver::formats::json::Value SerializeHubReport(const NCore::NDomain::THubReport& report)
+{
+    userver::formats::json::ValueBuilder builder;
+
+    builder[EPOCH_KEY.data()] = std::to_string(report.Epoch.GetUnderlying());
+
+    builder[ENDPOINT_KEY.data()] = report.Endpoint.GetUnderlying();
+    builder[DC_KEY.data()] = report.DC.GetUnderlying();
+
+    builder[LOAD_FACTOR_KEY.data()] = report.LoadFactor.GetUnderlying();
+
+    userver::formats::json::ValueBuilder partitionsBuilder(userver::formats::common::Type::kObject);
+
+    for (const auto& [partitionId, partitionWeight] : report.PartitionWeights) {
+        partitionsBuilder[std::to_string(partitionId.GetUnderlying())] = 
+            std::to_string(partitionWeight.GetUnderlying());
+    }
+
+    builder[PARTITIONS_KEY.data()] = partitionsBuilder;
+
+    return builder.ExtractValue();
+}
+
 NCore::NDomain::TPartitionMap DeserializePartitionMap(const userver::formats::json::Value& jsonValue)
 {
     NCore::NDomain::TPartitionMap result;
@@ -89,7 +115,7 @@ NCore::NDomain::TPartitionMap DeserializePartitionMap(const userver::formats::js
             pair[PARTITION_ID_KEY.data()].As<NCore::NDomain::TPartitionId::UnderlyingType>()
         };
         NCore::NDomain::THubEndpoint hubEndpoint{
-            pair[HUB_ENDPOINT_KEY.data()].As<NCore::NDomain::THubEndpoint::UnderlyingType>()
+            pair[HUB_KEY.data()].As<NCore::NDomain::THubEndpoint::UnderlyingType>()
         };
 
         result.Partitions.emplace_back(std::move(partitionId), std::move(hubEndpoint));
@@ -124,19 +150,19 @@ NCore::NDomain::THubReport DeserializeHubReport(const userver::formats::json::Va
     NCore::NDomain::THubReport report;
 
     report.Epoch = NCore::NDomain::TEpoch{
-        std::stoull(jsonValue["epoch"].As<std::string>())
+        std::stoull(jsonValue[EPOCH_KEY.data()].As<std::string>())
     };
     report.Endpoint = NCore::NDomain::THubEndpoint{
-        jsonValue["endpoint"].As<std::string>()
+        jsonValue[ENDPOINT_KEY.data()].As<std::string>()
     };
     report.DC = NCore::NDomain::THubDC{
-        jsonValue["dc"].As<std::string>()
+        jsonValue[DC_KEY.data()].As<std::string>()
     };
     report.LoadFactor = NCore::NDomain::TLoadFactor{
-        jsonValue["load_factor"].As<std::uint64_t>()
+        jsonValue[LOAD_FACTOR_KEY.data()].As<std::uint64_t>()
     };
 
-    const auto& partitionsJson = jsonValue["partitions"];
+    const auto& partitionsJson = jsonValue[PARTITIONS_KEY];
     for (auto it = partitionsJson.begin(); it != partitionsJson.end(); ++it) {
         NCore::NDomain::TPartitionId partitionId{
             std::stoull(it.GetName())

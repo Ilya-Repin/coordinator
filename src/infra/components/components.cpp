@@ -1,6 +1,7 @@
 #include "components.hpp"
 
 #include <api/http/v1/admin/get_context.hpp>
+#include <api/http/v1/admin/get_hub_reports.hpp>
 #include <api/http/v1/admin/get_partition_map.hpp>
 #include <infra/components/admin/admin_service_component.hpp>
 #include <infra/components/leader/leader_service_component.hpp>
@@ -65,6 +66,7 @@ void RegisterServices(userver::components::ComponentList& list)
 void RegisterHandlers(userver::components::ComponentList& list)
 {
     list.Append<NApi::NHandlers::TGetContextHandler>()
+        .Append<NApi::NHandlers::TGetHubReportsHandler>()
         .Append<NApi::NHandlers::TGetPartitionMapHandler>();
 }
 
