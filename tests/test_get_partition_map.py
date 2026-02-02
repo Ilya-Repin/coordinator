@@ -1,5 +1,4 @@
-# Start via `make test-debug` or `make test-release`
-
+import pytest
 
 async def test_get_partition_map(service_client):
     response = await service_client.get('/admin/partition_map')
