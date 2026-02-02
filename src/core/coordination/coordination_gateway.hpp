@@ -3,16 +3,23 @@
 #include <core/common/hub_params.hpp>
 #include <core/partition/partition_map.hpp>
 
-#include <optional>
+#include <stdexcept>
 #include <vector>
 
 namespace NCoordinator::NCore::NDomain {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class TInvalidPartitionMapException
+    : public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
 class ICoordinationGateway {
 public:
-    virtual std::optional<TPartitionMap> GetPartitionMap() const = 0;
+    virtual TPartitionMap GetPartitionMap() const = 0;
     virtual void BroadcastPartitionMap(const TPartitionMap& partitionMap) const = 0;
 
     virtual std::vector<THubEndpoint> GetHubDiscovery() const = 0;

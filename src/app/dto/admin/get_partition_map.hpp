@@ -1,0 +1,15 @@
+#pragma once
+
+#include <core/partition/partition_map.hpp>
+
+namespace NCoordinator::NApp::NDto {
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct TGetPartitionMapResponse {
+    NCore::NDomain::TPartitionMap PartitionMap;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+} // namespace NCoordinator::NApp::NDto

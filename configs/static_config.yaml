@@ -112,3 +112,10 @@ components_manager:
             path: /admin/context
             method: GET
             task_processor: main-task-processor
+            
+        handler-get-partition-map:
+            load-enabled: true
+            path: /admin/partition_map
+            method: GET
+            task_processor: main-task-processor
+            

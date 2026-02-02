@@ -24,7 +24,7 @@ public:
         const std::string& discoverySemaphore,
         const bool initialSetup);
 
-    std::optional<NCore::NDomain::TPartitionMap> GetPartitionMap() const override;
+    NCore::NDomain::TPartitionMap GetPartitionMap() const override;
     void BroadcastPartitionMap(const NCore::NDomain::TPartitionMap& partitionMap) const override;
 
     std::vector<NCore::NDomain::THubEndpoint> GetHubDiscovery() const override;

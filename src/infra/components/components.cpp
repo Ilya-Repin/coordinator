@@ -1,6 +1,7 @@
 #include "components.hpp"
 
 #include <api/http/v1/admin/get_context.hpp>
+#include <api/http/v1/admin/get_partition_map.hpp>
 #include <infra/components/admin/admin_service_component.hpp>
 #include <infra/components/leader/leader_service_component.hpp>
 #include <infra/components/leader/leader_dist_lock_component.hpp>
@@ -63,7 +64,8 @@ void RegisterServices(userver::components::ComponentList& list)
 // Handlers
 void RegisterHandlers(userver::components::ComponentList& list)
 {
-    list.Append<NHandlers::TGetContextHandler>();
+    list.Append<NApi::NHandlers::TGetContextHandler>()
+        .Append<NApi::NHandlers::TGetPartitionMapHandler>();
 }
 
 }  // namespace NCoordinator::NInfra::NComponents

@@ -2,7 +2,7 @@
 
 #include <userver/server/handlers/exceptions.hpp>
 
-namespace NCoordinator::NInfra::NHandlers {
+namespace NCoordinator::NApi::NHandlers {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,4 +20,4 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-}  // namespace NCoordinator::NInfra::NHandlers
+}  // namespace NCoordinator::NApi::NHandlers

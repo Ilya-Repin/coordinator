@@ -1,28 +1,28 @@
 #pragma once
 
 #include <app/exceptions.hpp>
-#include <app/dto/admin/get_context.hpp>
-#include <core/coordination/coordination_repository.hpp>
+#include <app/dto/admin/get_partition_map.hpp>
+#include <core/coordination/coordination_gateway.hpp>
 
 namespace NCoordinator::NApp::NUseCase {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TGetContextTemporaryUnavailable
+class TGetPartitionMapTemporaryUnavailable
     : public TApplicationException
 {
   using TApplicationException::TApplicationException;
 };
 
-class TGetContextUseCase final
+class TGetPartitionMapUseCase final
 {
 public:
-   TGetContextUseCase(NCore::NDomain::ICoordinationRepository& coordinationRepository);
+   TGetPartitionMapUseCase(NCore::NDomain::ICoordinationGateway& coordinationGateway);
 
-   NDto::TGetContextResponse Execute() const;
+   NDto::TGetPartitionMapResponse Execute() const;
 
 private:
-    NCore::NDomain::ICoordinationRepository& CoordinationRepository_;
+    NCore::NDomain::ICoordinationGateway& CoordinationGateway_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
