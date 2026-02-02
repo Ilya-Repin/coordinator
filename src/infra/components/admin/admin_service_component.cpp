@@ -2,6 +2,7 @@
 
 #include <infra/components/coordination/coordination_gateway_component.hpp>
 #include <infra/components/coordination/coordination_repository_component.hpp>
+#include <infra/components/hub/hub_gateway_component.hpp>
 
 #include <userver/components/component.hpp>
 #include <userver/components/component_context.hpp>
@@ -19,9 +20,11 @@ TAdminServiceComponent::TAdminServiceComponent(
         context.FindComponent<NComponents::TCoordinationRepositoryComponent>().GetRepository();
     auto& coordinationGateway =
         context.FindComponent<NComponents::TCoordinationGatewayComponent>().GetGateway();
+    auto& hubGateway =
+        context.FindComponent<NComponents::THubGatewayComponent>().GetGateway();
  
  
-    Service_ = std::make_unique<NApp::NService::TAdminService>(coordinationRepository, coordinationGateway);
+    Service_ = std::make_unique<NApp::NService::TAdminService>(coordinationRepository, coordinationGateway,hubGateway);
 }
 
 NApp::NService::TAdminService& TAdminServiceComponent::GetService()

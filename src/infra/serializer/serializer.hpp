@@ -17,6 +17,8 @@ userver::formats::json::Value SerializePartitionMap(const NCore::NDomain::TParti
 
 userver::formats::json::Value SerializeCoordinationContext(const NCore::NDomain::TCoordinationContext& context);
 
+userver::formats::json::Value SerializeHubReport(const NCore::NDomain::THubReport& report);
+
 NCore::NDomain::TPartitionMap DeserializePartitionMap(const userver::formats::json::Value& jsonValue);
 
 NCore::NDomain::TCoordinationContext DeserializeCoordinationContext(const userver::formats::json::Value& json);
