@@ -48,7 +48,7 @@ TKesusCoordinationGateway::TKesusCoordinationGateway(
     CoordinationSession_ = std::make_unique<userver::ydb::CoordinationSession>(std::move(session));
 }
 
-std::optional<NCore::NDomain::TPartitionMap> TKesusCoordinationGateway::GetPartitionMap() const
+NCore::NDomain::TPartitionMap TKesusCoordinationGateway::GetPartitionMap() const
 {
     NYdb::NCoordination::TDescribeSemaphoreSettings describeSettings;
     auto description = CoordinationSession_->DescribeSemaphore(PartitionMapSemaphore_, describeSettings);
@@ -58,14 +58,14 @@ std::optional<NCore::NDomain::TPartitionMap> TKesusCoordinationGateway::GetParti
         json = userver::formats::json::FromString(description.GetData());
     } catch(std::exception& ex) {
         LOG_ERROR() << "Can't parse json: " << ex;
-        return std::nullopt;
+        throw NCore::NDomain::TInvalidPartitionMapException("Can't parse json");
     }
 
     try {
         return DeserializePartitionMap(json);
     } catch (std::exception& ex) {
         LOG_ERROR() << "Can't deserialize partition map: " << ex;
-        return std::nullopt;
+        throw NCore::NDomain::TInvalidPartitionMapException("Can't deserialize partition map");
     }
 }
 

@@ -1,6 +1,6 @@
 #include "handler_exceptions.hpp"
 
-namespace NCoordinator::NInfra::NHandlers {
+namespace NCoordinator::NApi::NHandlers {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -24,4 +24,4 @@ TServerException::TServerException(std::string_view msg)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-}  // namespace NCoordinator::NInfra::NHandlers
+}  // namespace NCoordinator::NApi::NHandlers

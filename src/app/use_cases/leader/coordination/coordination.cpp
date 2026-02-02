@@ -24,12 +24,14 @@ void TCoordinationUseCase::Execute(const NDto::TCoordinationRequest& request) co
     auto hubDiscovery = CoordinationGateway_.GetHubDiscovery();
     auto hubReports = HubGateway_.GetHubReports(hubDiscovery);
 
-    auto partitionMapOpt = CoordinationGateway_.GetPartitionMap();
-    if (!partitionMapOpt.has_value()) {
+    NCore::NDomain::TPartitionMap partitionMap;
+
+    try {
+        partitionMap = CoordinationGateway_.GetPartitionMap();
+    } catch (std::exception& e) {
         LOG_ERROR() << "Failed to get partition map";
         return;
     }
-    auto partitionMap = partitionMapOpt.value();
 
     auto coordinationContext = CoordinationRepository_.GetCoordinationContext();
 

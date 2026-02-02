@@ -65,7 +65,7 @@ std::vector<NCore::NDomain::THubReport> THubGateway::GetHubReports(
             try {
                 auto report = DeserializeHubReport(json);
                 reports.emplace_back(std::move(report));
-            } catch(std::exception& ex) {
+            } catch (std::exception& ex) {
                 LOG_ERROR() << "Can't deserialize hub report " << ex;
                 continue;
             }

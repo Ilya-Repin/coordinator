@@ -10,13 +10,13 @@ namespace NCoordinator::NApi::NHandlers {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TGetContextHandler final
+class TGetPartitionMapHandler final
     : public userver::server::handlers::HttpHandlerJsonBase
 {
 public:
-    static constexpr std::string_view kName = "handler-get-context";
+    static constexpr std::string_view kName = "handler-get-partition-map";
 
-    TGetContextHandler(
+    TGetPartitionMapHandler(
         const userver::components::ComponentConfig&,
         const userver::components::ComponentContext&);
 

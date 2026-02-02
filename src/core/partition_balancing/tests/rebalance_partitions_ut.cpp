@@ -68,6 +68,7 @@ TEST_F(RebalancePartitionsTest, PerformsSingleRebalancingPhase) {
     };
 
     TCoordinationContext context{
+        .PartitionCooldowns{},
         .PartitionWeights{{PID(1), PW(20)}},
     };
 
@@ -138,6 +139,7 @@ TEST_F(RebalancePartitionsTest, StopsWhenMigrationBudgetExceeded) {
     };
 
     TCoordinationContext context{
+        .PartitionCooldowns{},
         .PartitionWeights{{PID(1), PW(50)}},
     };
 
@@ -186,6 +188,7 @@ TEST_F(RebalancePartitionsTest, RespectsMaxRebalancePhases) {
     };
 
     TCoordinationContext context{
+        .PartitionCooldowns{},
         .PartitionWeights{{PID(1), PW(10)}},
     };
 
