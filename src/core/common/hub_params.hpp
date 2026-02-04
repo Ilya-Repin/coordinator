@@ -21,7 +21,7 @@ using THubDC = userver::utils::StrongTypedef<
 
 using TLoadFactor = userver::utils::StrongTypedef<
     struct TLoadFactorTag,
-    std::uint64_t,
+    std::uint32_t,
     userver::utils::StrongTypedefOps::kCompareTransparent>;
 
 enum class EHubStatus {

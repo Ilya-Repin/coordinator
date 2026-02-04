@@ -4,6 +4,8 @@
 
 #include <userver/components/component.hpp>
 #include <userver/components/component_context.hpp>
+#include <userver/dynamic_config/source.hpp>
+#include <userver/dynamic_config/storage/component.hpp>
 #include <userver/ydb/component.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
@@ -23,9 +25,11 @@ TCoordinationGatewayComponent::TCoordinationGatewayComponent(
     auto initialSetup = config["initial-setup"].As<bool>(true);
 
     auto coordinationClient = context.FindComponent<userver::ydb::YdbComponent>().GetCoordinationClient(dbname);
+    auto configSource = context.FindComponent<userver::components::DynamicConfig>().GetSource();
 
     Gateway_ = std::make_unique<NInfra::NGateway::TKesusCoordinationGateway>(
         std::move(coordinationClient),
+        std::move(configSource),
         coordinationNode,
         partitionMapSemaphore,
         discoverySemaphore,

@@ -1,6 +1,7 @@
 #include "coordination.hpp"
 
 #include <core/coordination/coordination_state.hpp>
+#include <core/partition/partition_map.hpp>
 
 #include <userver/logging/log.hpp>
 
@@ -31,6 +32,11 @@ void TCoordinationUseCase::Execute(const NDto::TCoordinationRequest& request) co
     } catch (std::exception& e) {
         LOG_ERROR() << "Failed to get partition map";
         return;
+    }
+
+    if (partitionMap.Partitions.empty()) {
+        auto startingPartitionMap = NCore::NDomain::BuildStartingPartitionMap(request.DefaultPartitionsAmount);
+        std::swap(partitionMap.Partitions, startingPartitionMap.Partitions);
     }
 
     auto coordinationContext = CoordinationRepository_.GetCoordinationContext();

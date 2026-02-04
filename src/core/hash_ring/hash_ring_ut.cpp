@@ -31,6 +31,24 @@ TEST(THashRing, ThrowsOnEmptyPartitions)
     }, std::invalid_argument);
 }
 
+TEST(THashRing, DistributesPartitionsEvenly)
+{
+    THashRing ring(2, MockHasher);
+    const auto& partitions = ring.GetAllPartitions();
+
+    ASSERT_EQ(partitions.size(), 2);
+
+    std::uint64_t maxVal = std::numeric_limits<std::uint64_t>::max();
+    std::uint64_t expectedMid = maxVal / 2;
+    
+    std::string keyLow = std::to_string(expectedMid - 100);
+    std::string keyHigh = std::to_string(expectedMid + 100);
+
+    EXPECT_EQ(ring.GetPartition(keyLow), partitions[0]);
+
+    EXPECT_EQ(ring.GetPartition(keyHigh), partitions[1]);
+}
+
 TEST(THashRing, SortsAndDeduplicatesPartitions)
 {
     std::vector<TPartitionId> raw = {

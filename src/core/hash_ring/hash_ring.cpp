@@ -13,6 +13,31 @@ THashRing::THashRing(const std::vector<TPartitionId>& partitions, HashFunction h
     LoadPartitions(partitions);
 }
 
+THashRing::THashRing(std::size_t partitionCount, HashFunction hasher)
+    : Hasher_(std::move(hasher))
+{
+    if (partitionCount == 0) {
+        throw std::invalid_argument("Partition count must be at least 1");
+    }
+
+    Partitions_.reserve(partitionCount);
+
+    const std::uint64_t maxVal = std::numeric_limits<std::uint64_t>::max();
+    const std::uint64_t step = maxVal / partitionCount; 
+
+    for (std::size_t i = 1; i <= partitionCount; ++i) {
+        std::uint64_t boundary;
+
+        if (i == partitionCount) {
+            boundary = maxVal;
+        } else {
+            boundary = step * i;
+        }
+
+        Partitions_.emplace_back(boundary);
+    }
+}
+
 void THashRing::LoadPartitions(const std::vector<TPartitionId>& partitions)
 {
     if (partitions.empty()) {
@@ -25,7 +50,7 @@ void THashRing::LoadPartitions(const std::vector<TPartitionId>& partitions)
 
 TPartitionId THashRing::GetPartition(const std::string& key) const
 {
-    const uint64_t hash = Hasher_(key);
+    const std::uint64_t hash = Hasher_(key);
 
     auto it = std::lower_bound(Partitions_.begin(), Partitions_.end(), hash);
 

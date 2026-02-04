@@ -2,6 +2,7 @@
 
 #include <core/common/coordination_params.hpp>
 #include <core/common/partition_params.hpp>
+#include <infra/dynconfig/leader/repository_config.hpp>
 
 #include <userver/ydb/io/structs.hpp>
 
@@ -63,19 +64,19 @@ namespace NCoordinator::NInfra::NRepository {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TYdbCoordinationRepository::TYdbCoordinationRepository(std::shared_ptr<userver::ydb::TableClient> ydbClient)
+TYdbCoordinationRepository::TYdbCoordinationRepository(
+    std::shared_ptr<userver::ydb::TableClient> ydbClient,
+    userver::dynamic_config::Source configSource)
     : YdbClient_(std::move(ydbClient))
+    , ConfigSource_(std::move(configSource))
 { }
 
 NCore::NDomain::TCoordinationContext TYdbCoordinationRepository::GetCoordinationContext() const
 {
-    const userver::ydb::OperationSettings queryParams = {
-        3,                                // retries - TODO take from dynconfig
-        std::chrono::milliseconds(1000),  // operation_timeout - TODO take from dynconfig
-        std::chrono::milliseconds(1000),  // cancel_after - TODO take from dynconfig
-        std::chrono::milliseconds(1100),  // client_timeout - TODO take from dynconfig
-        userver::ydb::TransactionMode::kOnlineRO
-    };
+    const auto snapshot = ConfigSource_.GetSnapshot();
+    
+    userver::ydb::OperationSettings queryParams = snapshot[REPOSITORY_CONFIG].GetContextSettings;
+    queryParams.tx_mode = userver::ydb::TransactionMode::kOnlineRO;
 
     auto response = YdbClient_->ExecuteDataQuery(
         queryParams,
@@ -140,13 +141,10 @@ void TYdbCoordinationRepository::SetCoordinationContext(const NCore::NDomain::TC
         activeIds.emplace_back(partitionId);
     }
 
-    const userver::ydb::OperationSettings queryParams = {
-        3,                                // retries - TODO take from dynconfig
-        std::chrono::milliseconds(1000),  // operation_timeout - TODO take from dynconfig
-        std::chrono::milliseconds(1000),  // cancel_after - TODO take from dynconfig
-        std::chrono::milliseconds(1100),  // client_timeout - TODO take from dynconfig
-        userver::ydb::TransactionMode::kSerializableRW
-    };
+    const auto snapshot = ConfigSource_.GetSnapshot();
+    
+    userver::ydb::OperationSettings queryParams = snapshot[REPOSITORY_CONFIG].SetContextSettings;
+    queryParams.tx_mode = userver::ydb::TransactionMode::kSerializableRW;
 
     auto response = YdbClient_->ExecuteDataQuery(
         queryParams,
