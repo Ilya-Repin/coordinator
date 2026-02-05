@@ -1,6 +1,7 @@
 #include "heuristic_predictor.hpp"
 
 #include <core/common/partition_params.hpp>
+#include <infra/dynconfig/predictor/predictor_config.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -10,6 +11,10 @@ namespace NCoordinator::NInfra {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+THeuristicPredictor::THeuristicPredictor(userver::dynamic_config::Source configSource)
+    : ConfigSource_(configSource)
+{ }
+
 NCore::NDomain::TLoadFactor THeuristicPredictor::PredictLoadFactor(
     const NCore::TPredictionParams& params) const
 {
@@ -17,7 +22,9 @@ NCore::NDomain::TLoadFactor THeuristicPredictor::PredictLoadFactor(
 
     if (currentTotalWeight <= std::numeric_limits<double>::epsilon() || params.TotalPartitions == 0) {
         if (params.Increasing) {
-            return DefaultFirstLoadFactor;
+            const auto snapshot = ConfigSource_.GetSnapshot();
+            auto loadFactor = snapshot[PREDICTOR_CONFIG].DefaultFirstLoadFactor;
+            return loadFactor;
         } else {
             return NCore::NDomain::TLoadFactor{0};
         }

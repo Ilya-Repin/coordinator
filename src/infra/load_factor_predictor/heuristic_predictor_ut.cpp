@@ -1,5 +1,10 @@
 #include "heuristic_predictor.hpp"
 
+#include <infra/dynconfig/predictor/predictor_config.hpp>
+
+#include <userver/dynamic_config/storage_mock.hpp>
+#include <userver/formats/parse/common_containers.hpp>
+
 #include <gtest/gtest.h>
 
 namespace {
@@ -28,6 +33,8 @@ TPredictionParams MakeParams(
     return p;
 }
 
+const auto DEFAULT_JSON = userver::formats::json::FromString(R"( {"default_first_load_factor": 5} )");
+
 ////////////////////////////////////////////////////////////////////////////////
 
 } // anonymous namespace
@@ -38,7 +45,11 @@ namespace NCoordinator::NInfra {
 
 TEST(THeuristicPredictor, LinearGrowth)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     auto params = MakeParams(50, 100, 20, true);
     auto result = predictor.PredictLoadFactor(params);
@@ -48,7 +59,11 @@ TEST(THeuristicPredictor, LinearGrowth)
 
 TEST(THeuristicPredictor, LinearDecline)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     auto params = MakeParams(50, 100, 20, false);
     auto result = predictor.PredictLoadFactor(params);
@@ -58,7 +73,11 @@ TEST(THeuristicPredictor, LinearDecline)
 
 TEST(THeuristicPredictor, FirstPartitionInsertionUsesDefault)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     TPredictionParams params;
     params.LoadFactor = TLoadFactor{0};
@@ -74,7 +93,11 @@ TEST(THeuristicPredictor, FirstPartitionInsertionUsesDefault)
 
 TEST(THeuristicPredictor, ClampsToMaxLoadFactor)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     auto params = MakeParams(80, 100, 50, true);
     auto result = predictor.PredictLoadFactor(params);
@@ -84,7 +107,11 @@ TEST(THeuristicPredictor, ClampsToMaxLoadFactor)
 
 TEST(THeuristicPredictor, ClampsToZeroLoadFactor)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     auto params = MakeParams(10, 100, 100, false);
     auto result = predictor.PredictLoadFactor(params);
@@ -94,7 +121,11 @@ TEST(THeuristicPredictor, ClampsToZeroLoadFactor)
 
 TEST(THeuristicPredictor, RoundsUpPessimistically)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     auto params = MakeParams(10, 100, 1, true);
     auto result = predictor.PredictLoadFactor(params);
@@ -103,9 +134,13 @@ TEST(THeuristicPredictor, RoundsUpPessimistically)
 }
 
 TEST(THeuristicPredictor, HandlesZeroDeltaWeight)
-{
-    const THeuristicPredictor predictor;
-
+{   
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
+    
     auto params = MakeParams(50, 100, 0, true);
     auto result = predictor.PredictLoadFactor(params);
 
@@ -114,7 +149,11 @@ TEST(THeuristicPredictor, HandlesZeroDeltaWeight)
 
 TEST(THeuristicPredictor, HandlesRemovalFromEmptySafeGuard)
 {
-    const THeuristicPredictor predictor;
+    userver::dynamic_config::StorageMock storage{
+        {PREDICTOR_CONFIG, DEFAULT_JSON},
+    };
+ 
+    THeuristicPredictor predictor{storage.GetSource()};
 
     TPredictionParams params;
     params.PartitionsWeight = TPartitionWeight{0};

@@ -2,7 +2,7 @@
 
 #include <core/common/coordination_params.hpp>
 #include <core/common/partition_params.hpp>
-#include <infra/dynconfig/leader/repository_config.hpp>
+#include <infra/dynconfig/repository/repository_config.hpp>
 
 #include <userver/ydb/io/structs.hpp>
 
