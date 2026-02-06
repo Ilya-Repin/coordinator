@@ -24,13 +24,23 @@ components_manager:
                     level: $logger-level
                     overflow_behavior: discard  # Drop logs if the system is too busy to write them down.
 
-        # Dynamic config options. Cache is disabled, updates are disabled.
         dynamic-config:
-            # For most of userver dynamic configs, defaults are used, some are overridden here.
-            # See userver "dynamic config" docs for what configs exist.
-            defaults:
-                HTTP_CLIENT_CONNECTION_POOL_SIZE: 1000
-        
+            updates-enabled: true
+            fs-cache-path: $config-cache
+            fs-task-processor: fs-task-processor
+
+        dynamic-config-client:
+            config-url: $config-server-url
+            http-retries: 5
+            http-timeout: 20s
+            service-name: chat
+
+        dynamic-config-client-updater:
+            config-settings: false
+            first-update-fail-ok: true
+            full-update-interval: 1m
+            update-interval: 5s
+
         default-secdist-provider:
             config: secure_data.json
 
@@ -119,6 +129,12 @@ components_manager:
             method: GET
             task_processor: main-task-processor
             
+        handler-get-partition:
+            load-enabled: true
+            path: /admin/partition
+            method: GET
+            task_processor: main-task-processor
+
         handler-get-hub-reports:
             load-enabled: true
             path: /admin/hub_reports

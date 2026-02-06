@@ -5,3 +5,6 @@ logger-level: debug
 is-testing: true
 
 server-port: 8080
+
+config-cache: ~/cache/
+config-server-url: http://localhost:8083

@@ -1,7 +1,5 @@
 #include "get_partition_map.hpp"
 
-#include <core/coordination/coordination_state.hpp>
-
 #include <userver/logging/log.hpp>
 
 #include <fmt/format.h>

@@ -10,6 +10,7 @@ TAdminService::TAdminService(
     NCore::NDomain::IHubGateway& hubGateway)
     : GetContextUseCase_(coordinationRepository)
     , GetPartitionMapUseCase_(coordinationGateway)
+    , GetPartitionUseCase_(coordinationGateway)
     , GetHubReportsUseCase_(coordinationGateway, hubGateway)
 { }
 
@@ -21,6 +22,11 @@ NDto::TGetContextResponse TAdminService::GetCoordinationContext() const
 NDto::TGetPartitionMapResponse TAdminService::GetPartitionMap() const
 {
     return GetPartitionMapUseCase_.Execute();
+}
+
+NDto::TGetPartitionResponse TAdminService::GetPartition(const NDto::TGetPartitionRequest& request) const
+{
+    return GetPartitionUseCase_.Execute(request);
 }
 
 NDto::TGetHubReportsResponse TAdminService::GetHubReports() const

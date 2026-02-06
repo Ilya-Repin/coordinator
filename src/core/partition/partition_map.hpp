@@ -17,6 +17,8 @@ struct TPartitionMap {
     TEpoch Epoch;
 };
 
+TPartitionMap BuildStartingPartitionMap(std::size_t partitionsAmount);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 } // namespace NCoordinator::NCore::NDomain

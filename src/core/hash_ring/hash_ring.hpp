@@ -16,6 +16,7 @@ public:
     using HashFunction = std::function<std::uint64_t(const std::string&)>;
 
     explicit THashRing(const std::vector<TPartitionId>& partitions, HashFunction hasher = std::hash<std::string>{});
+    explicit THashRing(std::size_t partitionCount, HashFunction hasher = std::hash<std::string>{});
 
     void LoadPartitions(const std::vector<TPartitionId>& partitions);
 

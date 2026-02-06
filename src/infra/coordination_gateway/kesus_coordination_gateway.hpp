@@ -4,6 +4,7 @@
 #include <core/coordination/coordination_gateway.hpp>
 #include <core/partition/partition_map.hpp>
 
+#include <userver/dynamic_config/source.hpp>
 #include <userver/ydb/coordination.hpp>
 
 #include <memory>
@@ -19,6 +20,7 @@ class TKesusCoordinationGateway
 public:
     TKesusCoordinationGateway(
         std::shared_ptr<userver::ydb::CoordinationClient> coordinationClient,
+        userver::dynamic_config::Source configSource,
         const std::string& coordinationNode,
         const std::string& partitionMapSemaphore,
         const std::string& discoverySemaphore,
@@ -35,9 +37,11 @@ private:
         const std::string& coordinationNode) const;
 
 private:
+    std::unique_ptr<userver::ydb::CoordinationSession> CoordinationSession_;
+    userver::dynamic_config::Source ConfigSource_;
+    
     const std::string PartitionMapSemaphore_;
     const std::string DiscoverySemaphore_;
-    std::unique_ptr<userver::ydb::CoordinationSession> CoordinationSession_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

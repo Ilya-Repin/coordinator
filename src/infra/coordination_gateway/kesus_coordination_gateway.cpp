@@ -4,6 +4,7 @@
 #include <core/common/partition_params.hpp>
 #include <core/common/coordination_params.hpp>
 #include <infra/serializer/serializer.hpp>
+#include <infra/dynconfig/leader/leader_config.hpp>
 
 #include <userver/formats/json/serialize.hpp>
 #include <userver/logging/log.hpp>
@@ -18,7 +19,6 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-constexpr inline std::string_view DEFAULT_PARTITION_MAP_DATA = "{\"partitions\": [],\"epoch\": 0}";
 constexpr inline std::uint64_t PARTITION_MAP_SEMAPHORE_LIMIT = 1;
 constexpr inline std::uint64_t DISCOVERY_SEMAPHORE_LIMIT = std::numeric_limits<std::uint64_t>::max();
 
@@ -32,13 +32,15 @@ namespace NCoordinator::NInfra::NGateway {
 
 TKesusCoordinationGateway::TKesusCoordinationGateway(
     std::shared_ptr<userver::ydb::CoordinationClient> coordinationClient,
+    userver::dynamic_config::Source configSource,
     const std::string& coordinationNode,
     const std::string& partitionMapSemaphore,
     const std::string& discoverySemaphore,
     const bool initialSetup)
-    : PartitionMapSemaphore_(partitionMapSemaphore)
+    : CoordinationSession_(nullptr)
+    , ConfigSource_(std::move(configSource))
+    , PartitionMapSemaphore_(partitionMapSemaphore)
     , DiscoverySemaphore_(discoverySemaphore)
-    , CoordinationSession_(nullptr)
 {
     if (initialSetup) {
         InitialSetup(*coordinationClient, coordinationNode);
@@ -109,11 +111,17 @@ void TKesusCoordinationGateway::InitialSetup(
     auto session = coordinationClient.StartSession(coordinationNode, {});
 
     try {
+        const auto snapshot = ConfigSource_.GetSnapshot();
+        const auto config = snapshot[LEADER_CONFIG];
+        auto partitionMap = NCore::NDomain::BuildStartingPartitionMap(config.DefaultPartitionsAmount);
+    
         session.CreateSemaphore(
             PartitionMapSemaphore_,
             PARTITION_MAP_SEMAPHORE_LIMIT);
-            // std::string{DEFAULT_PARTITION_MAP_DATA});
-        session.UpdateSemaphore(PartitionMapSemaphore_, std::string{DEFAULT_PARTITION_MAP_DATA});
+            // userver::formats::json::ToStableString(SerializePartitionMap(partitionMap)));
+        session.UpdateSemaphore(
+            PartitionMapSemaphore_,
+            userver::formats::json::ToStableString(SerializePartitionMap(partitionMap)));
     } catch (const userver::ydb::YdbResponseError& ex) {
         LOG_WARNING() << "Could not create partition map semaphore: " << ex;
     }

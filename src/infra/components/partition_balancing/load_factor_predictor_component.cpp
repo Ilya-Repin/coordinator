@@ -4,6 +4,7 @@
 
 #include <userver/components/component.hpp>
 #include <userver/components/component_context.hpp>
+#include <userver/dynamic_config/storage/component.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
 namespace NCoordinator::NInfra::NComponents {
@@ -17,8 +18,9 @@ TLoadFactorPredictorComponent::TLoadFactorPredictorComponent(
 {
     // TODO other types of predictors
     // auto type = config["type"].As<std::string>();
+    auto configSource = context.FindComponent<userver::components::DynamicConfig>().GetSource();
 
-    Predictor_ = std::make_unique<THeuristicPredictor>();
+    Predictor_ = std::make_unique<THeuristicPredictor>(std::move(configSource));
 }
 
 NCore::ILoadFactorPredictor& TLoadFactorPredictorComponent::GetPredictor()

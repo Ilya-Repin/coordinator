@@ -3,6 +3,7 @@
 #include <app/services/leader/leader_service.hpp>
 
 #include <userver/ydb/dist_lock/component_base.hpp>
+#include <userver/dynamic_config/source.hpp>
 
 namespace NCoordinator::NInfra::NComponents {
 
@@ -24,6 +25,8 @@ public:
 
 private:
     NApp::NService::TLeaderService& Service_;
+
+    userver::dynamic_config::Source ConfigSource_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

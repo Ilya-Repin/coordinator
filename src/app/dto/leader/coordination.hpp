@@ -8,6 +8,7 @@ namespace NCoordinator::NApp::NDto {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct TCoordinationRequest {
+    std::size_t DefaultPartitionsAmount;
     NCore::NDomain::TStateBuildingSettings StateBuildingSettings;
     NCore::TBalancingSettings BalancingSettings;
 };
