@@ -1,17 +1,20 @@
-# coordinator
+# Координатор для системы доставки сообщений
+Сервис координатор – управляет кластером хабов
 
-Template of a C++ service that uses [userver framework](https://github.com/userver-framework/userver).
-
-
-## Download and Build
-
-To create your own userver-based service follow the following steps:
-
-1. Press the "Use this template button" at the top right of this GitHub page
-2. Clone the service `git clone your-service-repo && cd your-service-repo && git submodule update --init`
-3. Give a proper name to your service and replace all the occurrences of "coordinator" string with that name
-4. Feel free to tweak, adjust or fully rewrite the source code of your service.
-
+## Краткое описание
+- Базовая сущность в системе – канал (через канал проходят сообщения, например одному читателю или группе)
+- Шлюзы держат подключения к читателям
+- Хабы обслуживают потоки сообщений назначенных партиций
+- Каналы разделены на партиции
+- Партиции каналов представлены как диапазоны на хеш-кольце
+- Среди координаторов выбирается лидер
+- Лидер раз в N секунд проводит координацию:
+    1) Определяет текущее состояние кластера
+    2) Распределяет и балансирует партиции между хабами
+    3) Публикует новую карту партциий, которая содержит маппинг партиций в хабы и номер текущей эпохи
+- Leader Election, Service Discovery и публикация partition map реализованы через механизм распределенных семафоров узлов координации YDB
+- Параметры балансировки можно крутить через динамический конфиг
+- Прототип ["хабошлюза"](https://github.com/Repin-Daniil/chat-service)
 
 ## Makefile
 
