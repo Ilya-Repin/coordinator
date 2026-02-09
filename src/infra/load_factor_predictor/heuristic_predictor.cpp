@@ -23,7 +23,7 @@ NCore::NDomain::TLoadFactor THeuristicPredictor::PredictLoadFactor(
     if (currentTotalWeight <= std::numeric_limits<double>::epsilon() || params.TotalPartitions == 0) {
         if (params.Increasing) {
             const auto snapshot = ConfigSource_.GetSnapshot();
-            auto loadFactor = snapshot[PREDICTOR_CONFIG].DefaultFirstLoadFactor;
+            auto loadFactor = snapshot[PREDICTOR_CONFIG].FirstLoadFactor;
             return loadFactor;
         } else {
             return NCore::NDomain::TLoadFactor{0};
