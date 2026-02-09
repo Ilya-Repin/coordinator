@@ -1,7 +1,5 @@
 #pragma once
 
-#include <core/common/hub_params.hpp>
-
 #include <userver/dynamic_config/snapshot.hpp>
 #include <userver/formats/json/value.hpp>
 
@@ -9,21 +7,23 @@ namespace NCoordinator::NInfra {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct TPredictorSettings {
-    NCore::NDomain::TLoadFactor FirstLoadFactor;
+struct THubGatewaySettings {
+    std::chrono::seconds Timeout{5};
+    std::size_t Retries{3};
 };
 
-inline const userver::dynamic_config::Key<TPredictorSettings> PREDICTOR_CONFIG{
-    "PREDICTOR_CONFIG",
+inline const userver::dynamic_config::Key<THubGatewaySettings> HUB_GATEWAY_CONFIG{
+    "HUB_GATEWAY_CONFIG",
     userver::dynamic_config::DefaultAsJsonString{R"(
 {
-    "first_load_factor": 5
+    "timeout_seconds": 5,
+    "retries": 3
 }
 )"}};
 
-TPredictorSettings Parse(
+THubGatewaySettings Parse(
     const userver::formats::json::Value& value,
-    userver::formats::parse::To<TPredictorSettings>);
+    userver::formats::parse::To<THubGatewaySettings>);
 
 ////////////////////////////////////////////////////////////////////////////////
 

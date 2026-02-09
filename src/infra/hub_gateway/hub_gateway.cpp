@@ -1,6 +1,7 @@
 #include "hub_gateway.hpp"
 
 #include <infra/serializer/serializer.hpp>
+#include <infra/dynconfig/hub_gateway/hub_gateway_config.hpp>
 
 #include <userver/engine/wait_any.hpp>
 #include <userver/formats/json/serialize.hpp>
@@ -8,24 +9,13 @@
 
 #include <chrono>
 
-namespace {
-
-////////////////////////////////////////////////////////////////////////////////
-
-inline constexpr auto DEFAULT_TIMEOUT = std::chrono::seconds(5);
-
-inline constexpr auto DEFAULT_RETRIES = 3;
-
-////////////////////////////////////////////////////////////////////////////////
-
-}
-
 namespace NCoordinator::NInfra::NGateway {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-THubGateway::THubGateway(userver::clients::http::Client& client)
+THubGateway::THubGateway(userver::clients::http::Client& client, userver::dynamic_config::Source configSource)
     : Client_(client)
+    , ConfigSource_(configSource)
 { }
 
 std::vector<NCore::NDomain::THubReport> THubGateway::GetHubReports(
@@ -34,12 +24,15 @@ std::vector<NCore::NDomain::THubReport> THubGateway::GetHubReports(
     std::vector<userver::clients::http::ResponseFuture> requests;
     requests.reserve(hubs.size());
 
+    const auto snapshot = ConfigSource_.GetSnapshot();
+    const auto config = snapshot[HUB_GATEWAY_CONFIG];   
+
     for (const auto& hub : hubs) {
         auto request = Client_.CreateRequest()
             .follow_redirects(false)
             .get(hub.GetUnderlying())
-            .timeout(DEFAULT_TIMEOUT)
-            .retry(DEFAULT_RETRIES)
+            .timeout(config.Timeout)
+            .retry(config.Retries)
             .async_perform();
 
         requests.emplace_back(std::move(request));

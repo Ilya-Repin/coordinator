@@ -5,6 +5,7 @@
 #include <userver/clients/http/component.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/component_context.hpp>
+#include <userver/dynamic_config/storage/component.hpp>
 
 namespace NCoordinator::NInfra::NComponents {
 
@@ -16,8 +17,9 @@ THubGatewayComponent::THubGatewayComponent(
     : LoggableComponentBase(config, context)
 {
     auto& httpClient = context.FindComponent<userver::components::HttpClient>().GetHttpClient();
+    auto configSource = context.FindComponent<userver::components::DynamicConfig>().GetSource();
 
-    Gateway_ = std::make_unique<NInfra::NGateway::THubGateway>(httpClient);
+    Gateway_ = std::make_unique<NInfra::NGateway::THubGateway>(httpClient, std::move(configSource));
 }
 
 NCore::NDomain::IHubGateway& THubGatewayComponent::GetGateway()

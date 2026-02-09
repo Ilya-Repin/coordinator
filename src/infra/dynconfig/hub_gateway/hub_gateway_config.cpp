@@ -1,6 +1,4 @@
-#include "predictor_config.hpp"
-
-#include <core/common/hub_params.hpp>
+#include "hub_gateway_config.hpp"
 
 #include <userver/dynamic_config/value.hpp>
 #include <userver/formats/parse/common_containers.hpp>
@@ -9,16 +7,13 @@ namespace NCoordinator::NInfra {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TPredictorSettings Parse(
+THubGatewaySettings Parse(
     const userver::formats::json::Value& value,
-    userver::formats::parse::To<TPredictorSettings>)
+    userver::formats::parse::To<THubGatewaySettings>)
 {
-    const auto firstLoadFactor = NCore::NDomain::TLoadFactor{
-        value["first_load_factor"].As<NCore::NDomain::TLoadFactor::UnderlyingType>()
-    };
-
-    return TPredictorSettings{
-        .FirstLoadFactor = firstLoadFactor,
+    return THubGatewaySettings{
+        .Timeout = value["timeout_seconds"].As<std::chrono::seconds>(),
+        .Retries = value["retries"].As<std::size_t>(),
     };
 }
 

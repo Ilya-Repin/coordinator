@@ -33,7 +33,7 @@ TPredictionParams MakeParams(
     return p;
 }
 
-const auto DEFAULT_JSON = userver::formats::json::FromString(R"( {"default_first_load_factor": 5} )");
+const auto DEFAULT_JSON = userver::formats::json::FromString(R"( {"first_load_factor": 5} )");
 
 ////////////////////////////////////////////////////////////////////////////////
 
